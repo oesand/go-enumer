@@ -81,16 +81,16 @@ They are written after `)` either as a word or the parameterized value `key: val
 Generative options are written after `)` either as a word or the parameterized value `key: value`
 
 
-#### - reversed
+#### - inverse
 
-Just add `reversed` option ater `)`
+Add `inverse` option after `)`
 
 ```go
-// enum(pending, running, completed) reversed
+// enum(pending, running, completed) inverse
 type Status string
 ```
 
-and generates values ​​with the name inversion
+and generates values with the name inversion
 
 ```go
 // Status enum declarations
@@ -98,5 +98,24 @@ const (
 	PendingStatus Status = "pending"
 	RunningStatus Status = "running"
 	CompletedStatus Status = "completed"
+)
+```
+#### - prefix: [value]
+
+Keyed parameter. Exemplar `prefix: Status`
+
+```go
+// enum(pending, running, completed) prefix:Status
+type StringStatus string
+```
+
+and generates values with the new name prefix in place of the old one
+
+```go
+// StringStatus enum declarations
+const (
+	StatusPending StringStatus = "pending"
+	StatusRunning StringStatus = "running"
+	StatusCompleted StringStatus = "completed"
 )
 ```

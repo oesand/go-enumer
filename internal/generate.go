@@ -45,7 +45,7 @@ func GenerateEnumFile(fileName, packageName string, enums []*FutureEnum) error {
 		}
 
 		for i, value := range enumInfo.ValueNames { // Generate enum values
-			fieldName := genEnumName(value, enumInfo.EnumName, enumInfo.reversedName)
+			fieldName := genEnumName(value, enumInfo)
 			if !unicode.IsLetter(rune(value[0])) {
 				return fmt.Errorf("generated invalid nama for enum value(%s) with 'reversed' tag", fieldName)
 			}
@@ -77,7 +77,7 @@ func GenerateEnumFile(fileName, packageName string, enums []*FutureEnum) error {
 			buf.WriteString(fmt.Sprintf("var _%sMap = map[string]%s{\n", enumInfo.EnumName, enumInfo.EnumName))
 			prevIndex = 0
 			for _, value := range enumInfo.ValueNames {
-				fieldName := genEnumName(value, enumInfo.EnumName, enumInfo.reversedName)
+				fieldName := genEnumName(value, enumInfo)
 				newIndex := prevIndex + len(value)
 				buf.WriteString(fmt.Sprintf("\t_%sName[%d:%d]: %s,\n", enumInfo.EnumName, prevIndex, newIndex, fieldName))
 				prevIndex = newIndex
@@ -98,7 +98,7 @@ func GenerateEnumFile(fileName, packageName string, enums []*FutureEnum) error {
 			buf.WriteString(fmt.Sprintf("func (en %s) IsValid() bool {\n\treturn ", enumInfo.EnumName))
 
 			for i, value := range enumInfo.ValueNames {
-				fieldName := genEnumName(value, enumInfo.EnumName, enumInfo.reversedName)
+				fieldName := genEnumName(value, enumInfo)
 				if i == 0 {
 					buf.WriteString(fmt.Sprintf("en == %s", fieldName))
 				} else {
@@ -113,7 +113,7 @@ func GenerateEnumFile(fileName, packageName string, enums []*FutureEnum) error {
 			enumInfo.EnumName, enumInfo.EnumName, enumInfo.EnumName))
 
 		for _, value := range enumInfo.ValueNames {
-			fieldName := genEnumName(value, enumInfo.EnumName, enumInfo.reversedName)
+			fieldName := genEnumName(value, enumInfo)
 			buf.WriteString(fmt.Sprintf("\t\t%s,\n", fieldName))
 		}
 
@@ -131,9 +131,13 @@ func GenerateEnumFile(fileName, packageName string, enums []*FutureEnum) error {
 	return os.WriteFile(absolutePath, buf.Bytes(), 0644)
 }
 
-func genEnumName(name, enumName string, reversed bool) string {
-	if reversed {
-		return toPascalCase(name) + enumName
+func genEnumName(name string, enum *FutureEnum) string {
+	prefix := enum.prefix
+	if prefix == "" {
+		prefix = enum.EnumName
 	}
-	return enumName + toPascalCase(name)
+	if enum.reversedName {
+		return toPascalCase(name) + prefix
+	}
+	return prefix + toPascalCase(name)
 }

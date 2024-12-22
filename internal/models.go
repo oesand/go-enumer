@@ -13,4 +13,5 @@ type FutureEnum struct {
 
 	// Extra options
 	reversedName bool
+	prefix       string
 }

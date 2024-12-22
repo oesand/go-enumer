@@ -69,7 +69,10 @@ func DoGenerate() {
 		}
 		allEnums = append(allEnums, file.Enums...)
 	}
-
+	if len(allEnums) == 0 {
+		log.Printf("file generation skipped, no enums found")
+		return
+	}
 	log.Printf("generate file enumer.g.go with %d enums total", len(allEnums))
 	err = internal.GenerateEnumFile("./enumer.g.go", packageName, allEnums)
 	if err != nil {

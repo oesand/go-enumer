@@ -30,6 +30,8 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*File, error) {
 		return nil, err
 	}
 
+	fmt.Println("Parse path:", absolutePath)
+
 	var enums []*FutureEnum
 	ast.Inspect(file, func(node ast.Node) bool {
 		if err != nil {
@@ -40,16 +42,26 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*File, error) {
 			return true
 		}
 		for _, spec := range decl.Specs {
-			tspec := spec.(*ast.TypeSpec)
+			tspec, sucs := spec.(*ast.TypeSpec)
+			if !sucs {
+				continue
+			}
+			ident, sucs := tspec.Type.(*ast.Ident)
+			if !sucs {
+				continue
+			}
 
-			tp := tspec.Type.(*ast.Ident).Name
+			typeName := ident.Name
 			name := tspec.Name.Name
 			doc := decl.Doc.Text()
 			var enum *FutureEnum
-			enum, err = parseType(tp, name, doc)
+			enum, err = parseType(typeName, name, doc)
 			if err != nil {
 				err = newLocatedErr(fileSet, filepath.Base(absolutePath), tspec, err.Error())
 				return true
+			}
+			if enum == nil {
+				continue
 			}
 			enums = append(enums, enum)
 		}
@@ -99,8 +111,13 @@ func parseType(typeName string, name string, comment string) (*FutureEnum, error
 					}
 				} else {
 					key := match[1]
-					//value := match[2]
-					return nil, fmt.Errorf("unknown tag name: %s", key)
+					value := match[2]
+					switch key {
+					case "prefix":
+						enumInfo.prefix = toPascalCase(value)
+					default:
+						return nil, fmt.Errorf("unknown tag name: %s", key)
+					}
 				}
 			}
 		}
