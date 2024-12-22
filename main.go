@@ -3,56 +3,37 @@ package main
 import (
 	"flag"
 	"fmt"
-	"go/parser"
 	"go/token"
 	"log"
 	"main/internal"
 	"path/filepath"
+	"strings"
 )
-
-// enum(pending_as, runNing, completed, failed)
-type IntState int
-
-// enum(pending_as, runNing, completed, failed)
-type StrState string
-
-// enum(pending_as, runNing, completed, failed)
-type PandState int
 
 const UsageText = "Usage of enumer: \n" +
-	"\t enumer -gen \n" +
+	"\t enumer # Help - you here ;) \n" +
+	"\t enumer gen # Generates enums from files current directory \n" +
 	"For more information, see: \n" +
-	"\t https://pkg.go.dev/golang.org/x/tools/cmd/stringer \n" +
-	"Flags: \n"
+	"\t " + internal.ProjectLink + " \n"
 
-var (
-	generateFlag = flag.Bool("gen", false, "run generate")
-	vendorFlag   = flag.Bool("vendor", false, "show detailed logs of execution")
-)
-
-func Usage() {
+func PrintUsage() {
 	fmt.Print(UsageText)
-	flag.PrintDefaults()
 }
 
 func main() {
 	log.SetFlags(0)
-	log.SetPrefix("stringer: ")
-	flag.Usage = Usage
+	log.SetPrefix("go-enumer: ")
+	flag.Usage = PrintUsage
 	flag.Parse()
 
-	if *generateFlag {
+	if flag.Arg(0) == "gen" {
 		DoGenerate()
 		return
 	}
-	Usage()
+	PrintUsage()
 }
 
 func DoGenerate() {
-	if *vendorFlag {
-		log.Println("Begin scan packages...")
-	}
-
 	files, err := internal.GlobFiles()
 	if err != nil {
 		log.Fatal("glob error:", err)
@@ -60,37 +41,36 @@ func DoGenerate() {
 	fileSet := token.NewFileSet()
 	var packageName string
 	var allEnums []*internal.FutureEnum
-	for _, filePath := range files {
-		if *vendorFlag {
-			log.Printf("Scan files: %s... \n", filePath)
-		}
-		absolutePath, err := filepath.Abs(filePath)
-		if err != nil {
-			if *vendorFlag {
-				log.Printf("abs path err: %s \n", filePath)
-			}
+	for _, fileName := range files {
+		if strings.Count(fileName, ".") > 1 {
 			continue
 		}
-		file, err := parser.ParseFile(fileSet, absolutePath, nil, parser.ParseComments)
+		absolutePath, err := filepath.Abs(fileName)
 		if err != nil {
-			if *vendorFlag {
-				log.Printf("parse file err: %s \n", absolutePath)
-			}
 			continue
 		}
+		file, err := internal.ParseFile(fileSet, absolutePath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if len(file.Enums) == 0 {
+			continue
+		}
+		var enumsString strings.Builder
+		for i, enum := range file.Enums {
+			if i > 0 {
+				enumsString.WriteString(", ")
+			}
+			enumsString.WriteString(enum.EnumName)
+		}
+		log.Printf("parsed file: %s [%s]", fileName, enumsString.String())
 		if packageName == "" {
-			packageName = file.Name.Name
+			packageName = file.Package
 		}
-		enums, err := internal.ParseEnums(file)
-		if err != nil {
-			if *vendorFlag {
-				log.Printf("parse file enums err: %s \n", filePath)
-			}
-			continue
-		}
-		allEnums = append(allEnums, enums...)
+		allEnums = append(allEnums, file.Enums...)
 	}
 
+	log.Printf("generate file enumer.g.go with %d enums total", len(allEnums))
 	err = internal.GenerateEnumFile("./enumer.g.go", packageName, allEnums)
 	if err != nil {
 		log.Fatal(err)

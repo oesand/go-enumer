@@ -1,12 +1,8 @@
 package internal
 
-import (
-	"go/ast"
-)
-
 type File struct {
-	Name string
-	file *ast.File // Parsed AST.
+	Package string
+	Enums   []*FutureEnum
 }
 
 type FutureEnum struct {
