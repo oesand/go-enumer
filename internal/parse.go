@@ -30,8 +30,6 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*File, error) {
 		return nil, err
 	}
 
-	fmt.Println("Parse path:", absolutePath)
-
 	var enums []*FutureEnum
 	ast.Inspect(file, func(node ast.Node) bool {
 		if err != nil {
@@ -104,8 +102,8 @@ func parseType(typeName string, name string, comment string) (*FutureEnum, error
 			for _, match := range matches {
 				if match[1] == "" && match[2] == "" {
 					switch match[0] {
-					case "reversed":
-						enumInfo.reversedName = true
+					case "inverse":
+						enumInfo.inverseName = true
 					default:
 						return nil, fmt.Errorf("unknown tag name: %s", match[0])
 					}

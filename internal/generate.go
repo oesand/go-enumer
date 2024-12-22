@@ -136,7 +136,7 @@ func genEnumName(name string, enum *FutureEnum) string {
 	if prefix == "" {
 		prefix = enum.EnumName
 	}
-	if enum.reversedName {
+	if enum.inverseName {
 		return toPascalCase(name) + prefix
 	}
 	return prefix + toPascalCase(name)

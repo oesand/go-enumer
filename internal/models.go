@@ -12,6 +12,6 @@ type FutureEnum struct {
 	ValueNames []string
 
 	// Extra options
-	reversedName bool
-	prefix       string
+	inverseName bool
+	prefix      string
 }
