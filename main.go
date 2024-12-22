@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/oesand/go-enumer/internal"
 	"go/token"
 	"log"
-	"main/internal"
 	"path/filepath"
 	"strings"
 )
