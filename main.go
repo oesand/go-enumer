@@ -11,8 +11,8 @@ import (
 )
 
 const UsageText = "Usage of enumer: \n" +
-	"\t enumer # Help - you here ;) \n" +
-	"\t enumer gen # Generates enums from files current directory \n" +
+	"\t go-enumer # Help - you here ;) \n" +
+	"\t go-enumer gen # Generates enums from files current directory \n" +
 	"For more information, see: \n" +
 	"\t " + internal.ProjectLink + " \n"
 

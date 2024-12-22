@@ -53,7 +53,12 @@ func (en StrStatus) String() string
 
 ## Installation
 
-Will be supplemented...
+Just run:
+``` bash
+go install github.com/oesand/go-enumer
+```
+
+Or you can download a release directly from [github](https://github.com/oesand/go-enumer/releases).
 
 ## Adding it to your project
 
