@@ -1,6 +1,5 @@
 # go-enumer
 
-[![Actions Status](https://github.com/oesand/go-enumer/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/oesand/go-enumer/actions/workflows/build_and_test.yml)
 [![GoDoc](https://godoc.org/github.com/oesand/go-enumer?status.svg)](https://godoc.org/github.com/oesand/go-enumer)
 
 An enum generator for go
