@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"unicode"
 )
 
 var (
@@ -87,12 +88,11 @@ func parseType(typeName string, name string, comment string) (*FutureEnum, error
 	if valuesString == "" {
 		return nil, fmt.Errorf("empty enum values, see examples %s", ProjectLink)
 	}
-	values := strings.Split(valuesString, ",")
-	enumInfo := &FutureEnum{
-		TypeName:   supportedTypes[typeName],
-		EnumName:   name,
-		ValueNames: values,
-	}
+	valueNames := strings.Split(valuesString, ",")
+
+	var inverseNameOption bool
+	prefixOption := name
+	appliedKeys := make(map[string]struct{})
 
 	enumEndIndex := enumExp.FindStringIndex(comment)[1]
 	sequencedText := strings.Trim(comment[enumEndIndex:], " \n")
@@ -100,25 +100,56 @@ func parseType(typeName string, name string, comment string) (*FutureEnum, error
 		matches := tagsExp.FindAllStringSubmatch(sequencedText, -1)
 		if matches != nil {
 			for _, match := range matches {
+				var key string
 				if match[1] == "" && match[2] == "" {
-					switch match[0] {
+					key = match[0]
+					switch key {
 					case "inverse":
-						enumInfo.inverseName = true
+						inverseNameOption = true
 					default:
 						return nil, fmt.Errorf("unknown tag name: %s", match[0])
 					}
 				} else {
-					key := match[1]
+					key = match[1]
 					value := match[2]
 					switch key {
 					case "prefix":
-						enumInfo.prefix = toPascalCase(value)
+						prefixOption = toPascalCase(value)
 					default:
 						return nil, fmt.Errorf("unknown tag name: %s", key)
 					}
 				}
+				if _, has := appliedKeys[key]; has {
+					return nil, fmt.Errorf("duplicated tag: %s", key)
+				}
+				appliedKeys[key] = struct{}{}
 			}
 		}
+	}
+
+	values := make([]EnumValue, len(valueNames))
+
+	for i, value := range valueNames {
+		var name string
+		if inverseNameOption {
+			name = toPascalCase(value) + prefixOption
+			if !unicode.IsLetter(rune(value[0])) {
+				return nil, fmt.Errorf("generated invalid name for enum value(%s) with 'inverse' tag", value)
+			}
+		} else {
+			name = prefixOption + toPascalCase(value)
+		}
+
+		values[i] = EnumValue{
+			Name:  name,
+			Value: value,
+		}
+	}
+
+	enumInfo := &FutureEnum{
+		TypeName: supportedTypes[typeName],
+		EnumName: name,
+		Values:   values,
 	}
 
 	return enumInfo, nil
