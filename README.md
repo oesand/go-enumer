@@ -80,7 +80,9 @@ They are written after `)` either as a word or the parameterized value `key: val
 
 Generative options are written after `)` either as a word or the parameterized value `key: value`
 
-#### - inverse[^tag_option] <sup>(tag)</sup>
+
+
+#### - inverse <sup>[(tag)](#tag_option)</sup>
 Swaps the value and the name of enum in the name
 <details>
 <summary>Example</summary>
@@ -105,7 +107,7 @@ const (
 
 </details>
 
-#### - prefix: `[value]` <sup>(keyed)</sup>
+#### - prefix: `[value]` <sup>[(keyed)](#keyed_option)</sup>
 
 Overrides default prefix (enum name) with `[value]`
 <details>
@@ -130,5 +132,8 @@ const (
 ```
 </details>
 
-[^tag_option]: My reference.
-[^keyed_option]: My reference.
+---
+
+###### <a name="tag_option">- (tag)</a>: Optional parameters are written without a value.
+
+###### <a name="keyed_option">- (keyed)</a>: Significant parameters are written with the value in the format: `key: value`.
