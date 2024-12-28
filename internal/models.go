@@ -6,12 +6,12 @@ type File struct {
 }
 
 type FutureEnum struct {
-	// Main info
-	TypeName   string
-	EnumName   string
-	ValueNames []string
+	TypeName string
+	EnumName string
+	Values   []EnumValue
+}
 
-	// Extra options
-	inverseName bool
-	prefix      string
+type EnumValue struct {
+	Name  string
+	Value string
 }

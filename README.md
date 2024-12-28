@@ -80,8 +80,10 @@ They are written after `)` either as a word or the parameterized value `key: val
 
 Generative options are written after `)` either as a word or the parameterized value `key: value`
 
-
-#### - inverse
+#### - inverse[^tag_option] <sup>(tag)</sup>
+Swaps the value and the name of enum in the name
+<details>
+<summary>Example</summary>
 
 Add `inverse` option after `)`
 
@@ -100,9 +102,16 @@ const (
 	CompletedStatus Status = "completed"
 )
 ```
-#### - prefix: [value]
 
-Keyed parameter. Exemplar `prefix: Status`
+</details>
+
+#### - prefix: `[value]` <sup>(keyed)</sup>
+
+Overrides default prefix (enum name) with `[value]`
+<details>
+<summary>Example</summary>
+
+Example: `prefix: Status`
 
 ```go
 // enum(pending, running, completed) prefix:Status
@@ -119,3 +128,7 @@ const (
 	StatusCompleted StringStatus = "completed"
 )
 ```
+</details>
+
+[^tag_option]: My reference.
+[^keyed_option]: My reference.
