@@ -1,7 +1,7 @@
-package internal
+package generate
 
 import (
-	"io"
+	"github.com/oesand/go-enumer/internal/shared"
 	"text/template"
 )
 
@@ -87,7 +87,12 @@ func (en {{ $enum.EnumName }}) IsValid() bool {
 {{ end }}
 `
 
-func generateEnumerFileContent(packageName string, enums []*FutureEnum, w io.Writer) error {
+func generateEnumerFile(packageName string, enums []*shared.EnumInfo) error {
+	file, err := shared.OpenFile("./enumer.g.go")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
 	funcMap := template.FuncMap{
 		"sumWithLen": func(one int, str string) int {
 			return one + len(str)
@@ -97,7 +102,7 @@ func generateEnumerFileContent(packageName string, enums []*FutureEnum, w io.Wri
 	if err != nil {
 		return err
 	}
-	return tmpl.Execute(w, map[string]any{
+	return tmpl.Execute(file, map[string]any{
 		"PackageName": packageName,
 		"Enums":       enums,
 	})

@@ -1,4 +1,4 @@
-package internal
+package parse
 
 func toPascalCase(input string) string {
 	result := make([]rune, 0, len(input))
