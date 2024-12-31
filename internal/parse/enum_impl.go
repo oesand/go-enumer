@@ -3,14 +3,14 @@ package parse
 import (
 	"fmt"
 	"github.com/oesand/go-enumer/internal/shared"
+	"regexp"
 	"strings"
 	"unicode"
 )
 
+var enumExp = regexp.MustCompile(`(?i)^\s*enum\(([^)]*)\)`)
+
 func parseEnumType(typeName string, name string, comment string) (*shared.EnumInfo, error) {
-	if _, has := shared.EnumSupportedTypes[typeName]; !has {
-		return nil, fmt.Errorf("not supported type(%s)", typeName)
-	}
 	matches := enumExp.FindStringSubmatch(comment)
 	if matches == nil {
 		return nil, nil
@@ -58,7 +58,7 @@ func parseEnumType(typeName string, name string, comment string) (*shared.EnumIn
 		}
 	}
 
-	values := make([]shared.EnumValue, len(valueNames))
+	values := make([]*shared.EnumValue, len(valueNames))
 
 	for i, value := range valueNames {
 		var name string
@@ -71,7 +71,7 @@ func parseEnumType(typeName string, name string, comment string) (*shared.EnumIn
 			name = prefixOption + toPascalCase(value)
 		}
 
-		values[i] = shared.EnumValue{
+		values[i] = &shared.EnumValue{
 			Name:  name,
 			Value: value,
 		}

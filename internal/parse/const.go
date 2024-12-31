@@ -4,6 +4,11 @@ import (
 	"fmt"
 	"go/ast"
 	"go/token"
+	"regexp"
+)
+
+var (
+	tagsExp = regexp.MustCompile(`\b(\w+)\s*:\s*(\w+)\b|\b\w+\b`)
 )
 
 func newLocatedErr(fileSet *token.FileSet, fileName string, tspec *ast.TypeSpec, text string, a ...any) error {

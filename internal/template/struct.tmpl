@@ -1,0 +1,34 @@
+{{- range $stct := .Structs -}}
+// {{ $stct.Name }} struct declarations
+
+const _{{ $stct.Name }}FieldNameAll = "{{ range $item := $stct.Fields }}{{ $item.FieldName }}{{ end }}"
+
+var _{{ $stct.Name }}FieldNames = []string{
+{{- $prevIndex := 0 }}
+{{- range $item := $stct.Fields }}
+	{{- $currIndex := sumWithLen $prevIndex $item.FieldName }}
+	_{{ $stct.Name }}FieldNameAll[{{ $prevIndex }}:{{ $currIndex }}],
+	{{- $prevIndex = $currIndex }}
+{{- end }}
+}
+
+func {{ $stct.Name }}FieldNames() []string {
+    temp := make([]string, len(_{{ $stct.Name }}FieldNames))
+    copy(temp, _{{ $stct.Name }}FieldNames)
+	return temp
+}
+{{ if eq $stct.GenerateKind "builder" }}
+type {{ $stct.Name }}Builder struct {
+    model *{{ $stct.Name }}
+}
+{{ range $item := $stct.Fields }}
+func (b *{{ $stct.Name }}Builder) With{{ $item.FieldName }}(value {{ genType $item.TypeInfo }}) *{{ $stct.Name }}Builder {
+    b.model.{{ $item.FieldName }} = value
+    return b
+}
+{{ end }}
+func (b *{{ $stct.Name }}Builder) Build() *{{ $stct.Name }} {
+    return b.model
+}
+{{- end -}}
+{{ end -}}

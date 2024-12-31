@@ -1,20 +1,39 @@
 package shared
 
-type File struct {
+type ItemType int
+
+const (
+	EnumItemType ItemType = iota
+	StructItemType
+)
+
+type ParsedFile struct {
 	Package string
-	Enums   []*EnumInfo
-	Structs []*StructInfo
+	Imports []string
+	Items   []*ParsedItem
+}
+
+type ParsedItem struct {
+	ItemType ItemType
+	Enum     *EnumInfo
+	Struct   *StructInfo
 }
 
 type GenerateData struct {
-	Enums   []*EnumInfo
-	Structs []*StructInfo
+	PackageName string
+	Imports     []string
+	Enums       []*EnumInfo
+	Structs     []*StructInfo
+}
+
+func (g *GenerateData) TotalCount() int {
+	return len(g.Enums) + len(g.Structs)
 }
 
 type EnumInfo struct {
 	TypeName string
 	EnumName string
-	Values   []EnumValue
+	Values   []*EnumValue
 }
 
 type EnumValue struct {
@@ -22,4 +41,27 @@ type EnumValue struct {
 	Value string
 }
 
-type StructInfo struct{}
+type StructGenKind string
+
+const (
+	BuilderGenKind StructGenKind = "builder"
+)
+
+type StructInfo struct {
+	Name   string
+	Fields []*StructField
+
+	RequireImports bool
+	GenerateKind   StructGenKind
+}
+
+type StructField struct {
+	FieldName string
+	TypeInfo  *ExtraTypeInfo
+}
+
+type ExtraTypeInfo struct {
+	Starred    bool
+	ImportPath string
+	TypeName   string
+}
