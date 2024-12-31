@@ -18,17 +18,41 @@ func {{ $stct.Name }}FieldNames() []string {
 	return temp
 }
 {{ if eq $stct.GenerateKind "builder" }}
+func New{{ $stct.Name }}Builder() *{{ $stct.Name }}Builder {
+    return &{{ $stct.Name }}Builder{}
+}
+
 type {{ $stct.Name }}Builder struct {
     model *{{ $stct.Name }}
+    appliedFields map[string]struct{}
+}
+
+func (b *{{ $stct.Name }}Builder) ensureOnce(fieldName string) {
+    if b.model == nil {
+        b.model = &{{ $stct.Name }}{}
+    }
+    if b.appliedFields == nil {
+        b.appliedFields = make(map[string]struct{})
+    }
+    if _, ok := b.appliedFields[fieldName]; ok {
+        panic("field \""+fieldName+"\" is already set")
+    }
+    b.appliedFields[fieldName] = struct{}{}
 }
 {{ range $item := $stct.Fields }}
 func (b *{{ $stct.Name }}Builder) With{{ $item.FieldName }}(value {{ genType $item.TypeInfo }}) *{{ $stct.Name }}Builder {
+    b.ensureOnce("{{ $item.FieldName }}")
     b.model.{{ $item.FieldName }} = value
     return b
 }
-{{ end }}
-func (b *{{ $stct.Name }}Builder) Build() *{{ $stct.Name }} {
-    return b.model
+{{ if $item.TypeInfo.IsArray }}
+func (b *{{ $stct.Name }}Builder) Add{{ $item.FieldName }}(values ...{{ genItemType $item.TypeInfo }}) *{{ $stct.Name }}Builder {
+    b.model.{{ $item.FieldName }} = append(b.model.{{ $item.FieldName }}, values...)
+    return b
 }
-{{- end -}}
+{{ end }}{{ end }}
+func (b *{{ $stct.Name }}Builder) Build() {{ $stct.Name }} {
+    return *b.model
+}
+{{- end }}
 {{ end -}}

@@ -51,7 +51,7 @@ func GenerateFile(data *shared.GenerateData) error {
 		if err != nil {
 			return err
 		}
-		funcMap["genType"] = func(info *shared.ExtraTypeInfo) string {
+		genType := func(info *shared.ExtraTypeInfo) string {
 			var typeString strings.Builder
 			if info.Starred {
 				typeString.WriteRune('*')
@@ -62,6 +62,14 @@ func GenerateFile(data *shared.GenerateData) error {
 			}
 			typeString.WriteString(info.TypeName)
 			return typeString.String()
+		}
+		funcMap["genItemType"] = genType
+		funcMap["genType"] = func(info *shared.ExtraTypeInfo) string {
+			dcl := genType(info)
+			if info.IsArray {
+				dcl = fmt.Sprintf("[]%s", dcl)
+			}
+			return dcl
 		}
 	}
 

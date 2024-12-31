@@ -23,7 +23,7 @@ type StrStatus string
 // enumer:builder
 type DataStr struct {
 	Name string
-	Item *shared.ParsedItem
+	Item []*shared.ParsedItem
 }
 
 const UsageText = "Usage of enumer: \n" +

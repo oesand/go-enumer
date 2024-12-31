@@ -61,6 +61,7 @@ type StructField struct {
 }
 
 type ExtraTypeInfo struct {
+	IsArray    bool
 	Starred    bool
 	ImportPath string
 	TypeName   string

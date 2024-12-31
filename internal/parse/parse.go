@@ -66,37 +66,37 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 						if !fieldName.IsExported() {
 							continue
 						}
-						var starred bool
-						var typeInfo *shared.ExtraTypeInfo
 						fieldType := field.Type
+						var typeInfo shared.ExtraTypeInfo
 					rollback:
 						switch ftyp := fieldType.(type) {
 						case *ast.Ident:
-							typeInfo = &shared.ExtraTypeInfo{
-								Starred:  starred,
-								TypeName: ftyp.Name,
-							}
+							typeInfo.TypeName = ftyp.Name
 						case *ast.SelectorExpr:
-							typeInfo = &shared.ExtraTypeInfo{
-								Starred:  starred,
-								TypeName: ftyp.Sel.Name,
-							}
+							typeInfo.TypeName = ftyp.Sel.Name
 							if info.RequireImports {
 								importPath := importsMap[ftyp.X.(*ast.Ident).Name]
 								requiredImports[importPath] = struct{}{}
 								typeInfo.ImportPath = importPath
 							}
 						case *ast.StarExpr:
-							starred = true
+							typeInfo.Starred = true
 							fieldType = ftyp.X
 							goto rollback
+						case *ast.ArrayType:
+							typeInfo.IsArray = true
+							fieldType = ftyp.Elt
+							goto rollback
+						default:
+							err = fmt.Errorf("unsupported field  type: %T\n", fieldType)
 						}
-						if typeInfo != nil {
-							fields = append(fields, &shared.StructField{
-								FieldName: fieldName.Name,
-								TypeInfo:  typeInfo,
-							})
+						if err != nil {
+							return true
 						}
+						fields = append(fields, &shared.StructField{
+							FieldName: fieldName.Name,
+							TypeInfo:  &typeInfo,
+						})
 					}
 				}
 				info.Fields = fields
