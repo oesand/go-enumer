@@ -53,6 +53,7 @@ type StructInfo struct {
 
 	RequireImports bool
 	GenerateKind   StructGenKind
+	Tags           map[string]string
 }
 
 type StructField struct {

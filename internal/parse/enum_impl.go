@@ -2,6 +2,7 @@ package parse
 
 import (
 	"fmt"
+	"github.com/oesand/go-enumer/cases"
 	"github.com/oesand/go-enumer/internal/shared"
 	"regexp"
 	"strings"
@@ -33,7 +34,7 @@ func parseEnumType(typeName string, name string, comment string) (*shared.EnumIn
 				inverseNameOption = true
 			case "prefix":
 				err = ensureTagHasValue(key, value)
-				prefixOption = toPascalCase(value)
+				prefixOption = cases.ToPascalCase(value)
 			default:
 				return fmt.Errorf("unknown tag name: %s", key)
 			}
@@ -49,12 +50,12 @@ func parseEnumType(typeName string, name string, comment string) (*shared.EnumIn
 	for i, value := range valueNames {
 		var name string
 		if inverseNameOption {
-			name = toPascalCase(value) + prefixOption
+			name = cases.ToPascalCase(value) + prefixOption
 			if !unicode.IsLetter(rune(value[0])) {
 				return nil, fmt.Errorf("generated invalid name for enum value(%s) with 'inverse' tag", value)
 			}
 		} else {
-			name = prefixOption + toPascalCase(value)
+			name = prefixOption + cases.ToPascalCase(value)
 		}
 
 		values[i] = &shared.EnumValue{

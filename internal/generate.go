@@ -35,6 +35,14 @@ func GenerateFile(data *shared.GenerateData) error {
 		"sumWithLen": func(one int, str string) int {
 			return one + len(str)
 		},
+		"hasTag": func(info *shared.StructInfo, tag string) bool {
+			_, has := info.Tags[tag]
+			return has
+		},
+		"eqTag": func(info *shared.StructInfo, tag string, value string) bool {
+			tval, has := info.Tags[tag]
+			return has && tval == value
+		},
 	}
 
 	if len(data.Imports) > 0 {

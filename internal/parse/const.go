@@ -22,7 +22,10 @@ func visitAllTags(text string, preventDuplicate bool, cb func(string, string) er
 	}
 	matches := tagsExp.FindAllStringSubmatch(text, -1)
 	if matches != nil {
-		appliedKeys := make(map[string]struct{})
+		var appliedKeys map[string]struct{}
+		if preventDuplicate {
+			appliedKeys = make(map[string]struct{})
+		}
 		for _, match := range matches {
 			var key string
 			if match[1] == "" && match[2] == "" {

@@ -12,20 +12,6 @@ import (
 	"strings"
 )
 
-type Jon struct{}
-
-// enum(pending, running, completed)
-type IntStatus int
-
-// enum(pending, running, completed)
-type StrStatus string
-
-// enumer:builder
-type DataStr struct {
-	Name string
-	Item []*shared.ParsedItem
-}
-
 const UsageText = "Usage of enumer: \n" +
 	"\t go-enumer # Help - you here ;) \n" +
 	"\t go-enumer gen # Generates enums from files current directory \n" +
