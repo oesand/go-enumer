@@ -8,11 +8,18 @@ import (
 
 const ProjectLink = "https://github.com/oesand/go-enumer"
 
-var EnumSupportedTypes = map[string]string{
-	"string": "string",
-	"int":    "int",
-	"int32":  "int",
-	"int64":  "int",
+type KnownEnumType string
+
+const (
+	IntEnum    KnownEnumType = "int"
+	StringEnum KnownEnumType = "string"
+)
+
+var EnumSupportedTypes = map[string]KnownEnumType{
+	"string": StringEnum,
+	"int":    IntEnum,
+	"int32":  IntEnum,
+	"int64":  IntEnum,
 }
 
 func OpenFile(path string) (*os.File, error) {

@@ -9,7 +9,7 @@ const (
 	SnakeCase  CaseType = "snake_case"
 )
 
-func (ct CaseType) Convert(input string) string {
+func (ct CaseType) From(input string) string {
 	if input == "" {
 		return ""
 	}

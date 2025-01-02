@@ -31,9 +31,10 @@ func (g *GenerateData) TotalCount() int {
 }
 
 type EnumInfo struct {
-	TypeName string
+	TypeName KnownEnumType
 	EnumName string
 	Values   []*EnumValue
+	Tags     map[string]string
 }
 
 type EnumValue struct {

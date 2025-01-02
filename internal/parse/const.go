@@ -7,7 +7,10 @@ import (
 	"regexp"
 )
 
-var tagsExp = regexp.MustCompile(`\b(\w+)\s*:\s*(\w+)\b|\b\w+\b`)
+var (
+	tagsExp       = regexp.MustCompile(`\b(\w+)\s*:\s*(\w+)\b|\b\w+\b`)
+	whitespaceExp = regexp.MustCompile(`\s+`)
+)
 
 func ensureTagHasValue(tag string, value string) error {
 	if value == "" {

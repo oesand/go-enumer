@@ -3,32 +3,36 @@
 {{ if eq $enum.TypeName "int" }}
 {{- /* declarations specific for int valued enums */ -}}
 const (
-	_{{$enum.EnumName}}NameAll = "{{ range $item := $enum.Values }}{{ $item.Value }}{{ end }}"
+	_{{$enum.EnumName}}NameAll = "{{ range $item := $enum.Values }}{{ if $item }}{{ $item.Value }}{{ end }}{{ end }}"
 {{- range $i, $item := $enum.Values }}
 {{- if eq $i 0 }}
-	{{ $item.Name }} {{ $enum.EnumName }} = iota
+	{{ $item.Name }} {{ $enum.EnumName }} = {{ if hasTag $enum.Tags "combined" }}1 << {{ end }}iota
 {{- else }}
+    {{- if $item }}
 	{{ $item.Name }}
+    {{- else }}
+    _
+    {{- end }}
 {{- end }}
 {{- end }}
 )
 
 var _{{ $enum.EnumName }}Names = []string{
 {{- $prevIndex := 0 }}
-{{- range $item := $enum.Values }}
+{{- range $item := $enum.Values }}{{ if $item }}
 	{{- $currIndex := sumWithLen $prevIndex $item.Value }}
 	_{{ $enum.EnumName }}NameAll[{{ $prevIndex }}:{{ $currIndex }}],
 	{{- $prevIndex = $currIndex }}
-{{- end }}
+{{- end }}{{ end }}
 }
 
 var _{{ $enum.EnumName }}Map = map[string]{{ $enum.EnumName }}{
 {{- $prevIndex := 0 }}
-{{- range $item := $enum.Values }}
+{{- range $item := $enum.Values }}{{ if $item }}
 	{{- $currIndex := sumWithLen $prevIndex $item.Value }}
 	_{{ $enum.EnumName }}NameAll[{{ $prevIndex }}:{{ $currIndex }}]: {{ $item.Name }},
 	{{- $prevIndex = $currIndex }}
-{{- end }}
+{{- end }}{{ end }}
 }
 
 func {{ $enum.EnumName }}Names() []string {
@@ -41,7 +45,11 @@ func {{ $enum.EnumName }}FromString(value string) ({{ $enum.EnumName }}, bool) {
 	enum, has := _{{ $enum.EnumName }}Map[value]
 	return enum, has
 }
-
+{{ if hasTag $enum.Tags "combined" }}
+func (gr {{ $enum.EnumName }}) Has(en {{ $enum.EnumName }}) bool {
+	return (gr & en) != 0
+}
+{{ end }}
 func (en {{ $enum.EnumName }}) String() string {
 	return _{{ $enum.EnumName }}Names[en]
 }
@@ -61,19 +69,17 @@ func (en {{ $enum.EnumName }}) String() string {
 
 func {{ $enum.EnumName }}Values() []{{ $enum.EnumName }} {
 	return []{{ $enum.EnumName }}{
-	{{- range $item := $enum.Values }}
+	{{- range $item := $enum.Values }}{{ if $item }}
 		{{ $item.Name }},
-	{{- end }}
+	{{- end }}{{ end }}
 	}
 }
 
 func (en {{ $enum.EnumName }}) IsValid() bool {
-	{{- range $i, $item := $enum.Values -}}
-	{{- if eq $i 0 }}
+	{{- range $i, $item := $enum.Values -}}{{ if $item }}{{ if eq $i 0 }}
 	return en == {{ $item.Name }}{{ else }} ||
 		en == {{ $item.Name }}
-	{{- end }}
-	{{- end }}
+	{{- end }}{{ end }}{{ end }}
 }
 
 {{ end -}}

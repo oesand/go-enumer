@@ -11,12 +11,12 @@ import (
 
 var enumExp = regexp.MustCompile(`(?i)^\s*enum\(([^)]*)\)`)
 
-func parseEnumType(typeName string, name string, comment string) (*shared.EnumInfo, error) {
+func parseEnumType(enumType shared.KnownEnumType, name string, comment string) (*shared.EnumInfo, error) {
 	matches := enumExp.FindStringSubmatch(comment)
 	if matches == nil {
 		return nil, nil
 	}
-	valuesString := strings.ReplaceAll(matches[1], " ", "")
+	valuesString := whitespaceExp.ReplaceAllString(matches[1], "")
 	if valuesString == "" {
 		return nil, fmt.Errorf("empty enum values, see examples %s", shared.ProjectLink)
 	}
@@ -25,8 +25,9 @@ func parseEnumType(typeName string, name string, comment string) (*shared.EnumIn
 	var inverseNameOption bool
 	prefixOption := name
 
+	definedTags := make(map[string]string)
 	enumEndIndex := enumExp.FindStringIndex(comment)[1]
-	sequencedText := strings.Trim(comment[enumEndIndex:], " \n")
+	sequencedText := strings.Trim(comment[enumEndIndex:], " \n\t")
 	if sequencedText != "" {
 		err := visitAllTags(sequencedText, true, func(key, value string) (err error) {
 			switch key {
@@ -35,19 +36,35 @@ func parseEnumType(typeName string, name string, comment string) (*shared.EnumIn
 			case "prefix":
 				err = ensureTagHasValue(key, value)
 				prefixOption = cases.ToPascalCase(value)
+			case "combined":
+				if enumType != shared.IntEnum {
+					return fmt.Errorf("tag \"combined\" is only allowed for int enum type")
+				}
+				definedTags[key] = ""
 			default:
 				return fmt.Errorf("unknown tag name: %s", key)
 			}
 			return
 		})
 		if err != nil {
+			fmt.Printf("error: %v\n", err)
 			return nil, err
 		}
 	}
 
 	values := make([]*shared.EnumValue, len(valueNames))
-
 	for i, value := range valueNames {
+		if value == "_" {
+			if enumType != shared.IntEnum {
+				return nil, fmt.Errorf("underscore value is only allowed for int enum type")
+			}
+			if i == 0 {
+				return nil, fmt.Errorf("underscore value is not allowed as first value")
+			}
+			values[i] = nil
+			continue
+		}
+
 		var name string
 		if inverseNameOption {
 			name = cases.ToPascalCase(value) + prefixOption
@@ -65,9 +82,10 @@ func parseEnumType(typeName string, name string, comment string) (*shared.EnumIn
 	}
 
 	enumInfo := &shared.EnumInfo{
-		TypeName: shared.EnumSupportedTypes[typeName],
+		TypeName: enumType,
 		EnumName: name,
 		Values:   values,
+		Tags:     definedTags,
 	}
 
 	return enumInfo, nil

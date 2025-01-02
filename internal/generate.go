@@ -5,8 +5,7 @@ import (
 	"embed"
 	"fmt"
 	"github.com/oesand/go-enumer/internal/shared"
-	"io/fs"
-	"path/filepath"
+	"io"
 	"strings"
 	"text/template"
 )
@@ -35,12 +34,12 @@ func GenerateFile(data *shared.GenerateData) error {
 		"sumWithLen": func(one int, str string) int {
 			return one + len(str)
 		},
-		"hasTag": func(info *shared.StructInfo, tag string) bool {
-			_, has := info.Tags[tag]
+		"hasTag": func(tags map[string]string, tag string) bool {
+			_, has := tags[tag]
 			return has
 		},
-		"eqTag": func(info *shared.StructInfo, tag string, value string) bool {
-			tval, has := info.Tags[tag]
+		"eqTag": func(tags map[string]string, tag string, value string) bool {
+			tval, has := tags[tag]
 			return has && tval == value
 		},
 	}
@@ -81,27 +80,34 @@ func GenerateFile(data *shared.GenerateData) error {
 		}
 	}
 
-	tmpl, err := template.New("").Funcs(funcMap).ParseFS(content, "template/*")
-	if err != nil {
-		return err
+	if len(data.Enums) > 0 {
+		err = executeTemplate(file, funcMap, "enum.tmpl", map[string]any{
+			"Enums": data.Enums,
+		})
+		if err != nil {
+			return err
+		}
 	}
-
-	paths, err := fs.Glob(content, "template/*")
-	if err != nil {
-		return err
-	}
-
-	templateContext := map[string]any{
-		"Enums":   data.Enums,
-		"Structs": data.Structs,
-	}
-
-	for _, path := range paths {
-		err = tmpl.ExecuteTemplate(file, filepath.Base(path), templateContext)
+	if len(data.Structs) > 0 {
+		err = executeTemplate(file, funcMap, "struct.tmpl", map[string]any{
+			"Structs": data.Structs,
+		})
 		if err != nil {
 			return err
 		}
 	}
 
+	return nil
+}
+
+func executeTemplate(w io.Writer, funcMap template.FuncMap, templateName string, data map[string]any) error {
+	tmpl, err := template.New("").Funcs(funcMap).ParseFS(content, fmt.Sprintf("template/%s", templateName))
+	if err != nil {
+		return err
+	}
+	err = tmpl.ExecuteTemplate(w, templateName, data)
+	if err != nil {
+		return err
+	}
 	return nil
 }

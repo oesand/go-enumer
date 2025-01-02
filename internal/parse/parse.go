@@ -37,6 +37,9 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 	}
 	var parsedItems []*shared.ParsedItem
 	ast.Inspect(file, func(node ast.Node) bool {
+		if err != nil {
+			return false
+		}
 		decl, ok := node.(*ast.GenDecl)
 		if !ok || decl.Tok != token.TYPE {
 			return true
@@ -54,7 +57,7 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 				info, err = parseStructType(name, doc)
 				if err != nil {
 					err = newLocatedErr(fileSet, filepath.Base(absolutePath), tspec, err.Error())
-					return true
+					return false
 				}
 				if info == nil {
 					continue
@@ -88,16 +91,23 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 							fieldType = ftyp.Elt
 							goto rollback
 						default:
-							err = fmt.Errorf("unsupported field  type: %T\n", fieldType)
+							err = fmt.Errorf("unsupported field type: %T\n", fieldType)
 						}
 						if err != nil {
-							return true
+							break
 						}
 						fields = append(fields, &shared.StructField{
 							FieldName: fieldName.Name,
 							TypeInfo:  &typeInfo,
 						})
 					}
+					if err != nil {
+						break
+					}
+				}
+				if err != nil {
+					err = newLocatedErr(fileSet, filepath.Base(absolutePath), tspec, err.Error())
+					return false
 				}
 				info.Fields = fields
 				parsedItems = append(parsedItems, &shared.ParsedItem{
@@ -110,15 +120,16 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 				name := tspec.Name.Name
 				doc := decl.Doc.Text()
 
-				if _, has := shared.EnumSupportedTypes[typeName]; !has {
-					return true
+				enumType, has := shared.EnumSupportedTypes[typeName]
+				if !has {
+					return false
 				}
 
 				var enum *shared.EnumInfo
-				enum, err = parseEnumType(typeName, name, doc)
+				enum, err = parseEnumType(enumType, name, doc)
 				if err != nil {
 					err = newLocatedErr(fileSet, filepath.Base(absolutePath), tspec, err.Error())
-					return true
+					return false
 				}
 				if enum == nil {
 					continue
