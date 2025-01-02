@@ -1,0 +1,99 @@
+{{- range $stct := .Structs -}}
+// {{ $stct.Name }} struct declarations
+const _{{ $stct.Name }}FieldNameAll = "{{ range $item := $stct.Fields }}{{ $item.FieldName }}{{ end }}"
+
+var _{{ $stct.Name }}FieldNames = []string{
+{{- $prevIndex := 0 }}
+{{- range $item := $stct.Fields }}
+	{{- $currIndex := sumWithLen $prevIndex $item.FieldName }}
+	_{{ $stct.Name }}FieldNameAll[{{ $prevIndex }}:{{ $currIndex }}],
+	{{- $prevIndex = $currIndex }}
+{{- end }}
+}
+
+func {{ $stct.Name }}FieldNames() []string {
+    temp := make([]string, len(_{{ $stct.Name }}FieldNames))
+    copy(temp, _{{ $stct.Name }}FieldNames)
+	return temp
+}
+{{ if eq $stct.GenerateKind "builder" }}
+func New{{ $stct.Name }}Builder() *{{ $stct.Name }}Builder {
+    return &{{ $stct.Name }}Builder{}
+}
+
+type {{ $stct.Name }}Builder struct {
+    model *{{ $stct.Name }}
+    appliedFields map[string]struct{}
+}
+
+func (b *{{ $stct.Name }}Builder) ensureOnce(fieldName string) {
+    if b.model == nil {
+        b.model = &{{ $stct.Name }}{}
+    }
+    if b.appliedFields == nil {
+        b.appliedFields = make(map[string]struct{})
+    }
+    if _, ok := b.appliedFields[fieldName]; ok {
+        panic("field \""+fieldName+"\" is already set")
+    }
+    b.appliedFields[fieldName] = struct{}{}
+}
+{{ range $i, $item := $stct.Fields }}
+func (b *{{ $stct.Name }}Builder) With{{ $item.FieldName }}(value {{ genType $item.TypeInfo }}) *{{ $stct.Name }}Builder {
+    b.ensureOnce(_{{ $stct.Name }}FieldNames[{{ $i }}])
+    b.model.{{ $item.FieldName }} = value
+    return b
+}
+{{ if $item.TypeInfo.IsArray }}
+func (b *{{ $stct.Name }}Builder) Add{{ $item.FieldName }}(values ...{{ genItemType $item.TypeInfo }}) *{{ $stct.Name }}Builder {
+    b.model.{{ $item.FieldName }} = append(b.model.{{ $item.FieldName }}, values...)
+    return b
+}
+{{ end }}{{ end }}
+func (b *{{ $stct.Name }}Builder) Build() {{ $stct.Name }} {
+    return *b.model
+}
+{{ if hasTag $stct.Tags "query" }}
+func (m *{{ $stct.Name }}) GetFieldValue(fieldName string) any {
+    if m == nil {
+        return nil
+    }
+    switch fieldName {
+{{- range $i, $item := $stct.Fields }}
+    case _{{ $stct.Name }}FieldNames[{{ $i }}]:
+        return m.{{ $item.FieldName }}
+{{- end }}
+	default:
+		panic("unknown field name: "+fieldName)
+	}
+    return nil
+}
+
+func (m *{{ $stct.Name }}) QueryZip() ([]string, []any) {
+    if m == nil {
+        return nil, nil
+    }
+    names := {{ $stct.Name }}FieldNames()
+    values := make([]any, 0, len(names))
+    for _, name := range names {
+        values = append(values, m.GetFieldValue(name))
+    }
+    return names, values
+}
+
+func (b *{{ $stct.Name }}Builder) QueryZip() ([]string, []any) {
+    if b.model == nil {
+        return nil, nil
+    }
+    names := make([]string, 0, len(b.appliedFields))
+    values := make([]any, 0, len(b.appliedFields))
+    for name := range b.appliedFields {
+        names = append(names, name)
+        values = append(values, b.model.GetFieldValue(name))
+    }
+    return names, values
+}
+{{- end }}
+{{- end }}
+{{- /* end builder declaration */ -}}
+{{- end }}
