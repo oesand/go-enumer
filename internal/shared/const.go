@@ -8,6 +8,12 @@ import (
 
 const ProjectLink = "https://github.com/oesand/go-enumer"
 
+var KnownPackages = map[string]string{
+	"fmt":    "\"fmt\"",
+	"cases":  "\"github.com/oesand/go-enumer/cases\"",
+	"ifaces": "\"github.com/oesand/go-enumer/ifaces\"",
+}
+
 type KnownEnumType string
 
 const (

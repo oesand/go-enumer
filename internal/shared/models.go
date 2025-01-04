@@ -52,9 +52,9 @@ type StructInfo struct {
 	Name   string
 	Fields []*StructField
 
-	RequireImports bool
-	GenerateKind   StructGenKind
-	Tags           map[string]string
+	KnownImports map[string]struct{}
+	GenerateKind StructGenKind
+	Tags         map[string]string
 }
 
 type StructField struct {

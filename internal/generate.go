@@ -78,6 +78,21 @@ func GenerateFile(data *shared.GenerateData) error {
 			}
 			return dcl
 		}
+		funcMap["knownAlias"] = func(name string) string {
+			importPath, has := shared.KnownPackages[name]
+			if !has {
+				panic(fmt.Sprintf("unknown package alias: %s", name))
+			}
+			alias, has := importsMap[importPath]
+			if !has {
+				panic(fmt.Sprintf("unknown package import: %s", importPath))
+			}
+			return alias
+		}
+	} else {
+		funcMap["knownAlias"] = func(name string) string {
+			panic("no imports")
+		}
 	}
 
 	if len(data.Enums) > 0 {

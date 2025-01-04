@@ -63,6 +63,14 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 					continue
 				}
 
+				for importName := range info.KnownImports {
+					importPath, has := shared.KnownPackages[importName]
+					if !has {
+						panic(fmt.Sprintf("unknown package predefined alias: %s", importName))
+					}
+					requiredImports[importPath] = struct{}{}
+				}
+
 				var fields []*shared.StructField
 				for _, field := range typ.Fields.List {
 					for _, fieldName := range field.Names {
@@ -77,11 +85,9 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 							typeInfo.TypeName = ftyp.Name
 						case *ast.SelectorExpr:
 							typeInfo.TypeName = ftyp.Sel.Name
-							if info.RequireImports {
-								importPath := importsMap[ftyp.X.(*ast.Ident).Name]
-								requiredImports[importPath] = struct{}{}
-								typeInfo.ImportPath = importPath
-							}
+							importPath := importsMap[ftyp.X.(*ast.Ident).Name]
+							requiredImports[importPath] = struct{}{}
+							typeInfo.ImportPath = importPath
 						case *ast.StarExpr:
 							typeInfo.Starred = true
 							fieldType = ftyp.X
@@ -134,6 +140,10 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 				if enum == nil {
 					continue
 				}
+				if enumType == shared.IntEnum {
+					requiredImports[shared.KnownPackages["fmt"]] = struct{}{}
+				}
+
 				parsedItems = append(parsedItems, &shared.ParsedItem{
 					ItemType: shared.EnumItemType,
 					Enum:     enum,

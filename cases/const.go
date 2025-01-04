@@ -3,6 +3,7 @@ package cases
 type CaseType string
 
 const (
+	NoChange   CaseType = ""
 	CamelCase  CaseType = "camelCase"
 	KebabCase  CaseType = "kebab-case"
 	PascalCase CaseType = "PascalCase"
@@ -11,9 +12,11 @@ const (
 
 func (ct CaseType) From(input string) string {
 	if input == "" {
-		return ""
+		return input
 	}
 	switch ct {
+	case NoChange:
+		return input
 	case CamelCase:
 		return ToCamelCase(input)
 	case KebabCase:
@@ -27,10 +30,8 @@ func (ct CaseType) From(input string) string {
 }
 
 func (ct CaseType) IsValid() bool {
-	return ct == CamelCase ||
-		ct == KebabCase ||
-		ct == PascalCase ||
-		ct == SnakeCase
+	return ct == NoChange || ct == CamelCase || ct == KebabCase ||
+		ct == PascalCase || ct == SnakeCase
 }
 
 func isAsciiUpperCase(r rune) bool {
