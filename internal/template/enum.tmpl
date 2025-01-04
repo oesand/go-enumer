@@ -19,20 +19,18 @@ const (
 
 var _{{ $enum.EnumName }}Names = []string{
 {{- $prevIndex := 0 }}
-{{- range $item := $enum.Values }}{{ if $item }}
+{{- range $i, $item := $enum.Values }}{{ if $item }}
 	{{- $currIndex := sumWithLen $prevIndex $item.Value }}
-	_{{ $enum.EnumName }}NameAll[{{ $prevIndex }}:{{ $currIndex }}],
+	{{ $i }}: _{{ $enum.EnumName }}NameAll[{{ $prevIndex }}:{{ $currIndex }}],
 	{{- $prevIndex = $currIndex }}
 {{- end }}{{ end }}
 }
 
-var _{{ $enum.EnumName }}Map = map[string]{{ $enum.EnumName }}{
-{{- $prevIndex := 0 }}
-{{- range $item := $enum.Values }}{{ if $item }}
-	{{- $currIndex := sumWithLen $prevIndex $item.Value }}
-	_{{ $enum.EnumName }}NameAll[{{ $prevIndex }}:{{ $currIndex }}]: {{ $item.Name }},
-	{{- $prevIndex = $currIndex }}
-{{- end }}{{ end }}
+func (en {{ $enum.EnumName }}) String() string {
+    if en.IsValid() {
+        return _{{ $enum.EnumName }}Names[en]
+    }
+    return {{ knownAlias "fmt" }}.Sprintf("{{ $enum.EnumName }}(%d)", en)
 }
 
 func {{ $enum.EnumName }}Names() []string {
@@ -42,16 +40,13 @@ func {{ $enum.EnumName }}Names() []string {
 }
 
 func {{ $enum.EnumName }}FromString(value string) ({{ $enum.EnumName }}, bool) {
-	enum, has := _{{ $enum.EnumName }}Map[value]
-	return enum, has
-}
-{{ if hasTag $enum.Tags "combined" }}
-func (gr {{ $enum.EnumName }}) Has(en {{ $enum.EnumName }}) bool {
-	return (gr & en) != 0
-}
-{{ end }}
-func (en {{ $enum.EnumName }}) String() string {
-	return _{{ $enum.EnumName }}Names[en]
+    switch value {
+{{- range $i, $item := $enum.Values }}{{ if $item }}
+    case _{{ $enum.EnumName }}Names[{{ $i }}]:
+        return {{ $item.Name }}, true
+{{- end }}{{ end }}
+    }
+    return -1, false
 }
 
 {{- else if eq $enum.TypeName "string" -}}

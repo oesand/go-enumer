@@ -34,7 +34,7 @@ func (b *{{ $stct.Name }}Builder) ensureOnce(fieldName string) {
         b.appliedFields = make(map[string]struct{})
     }
     if _, ok := b.appliedFields[fieldName]; ok {
-        panic("field \""+fieldName+"\" is already set")
+        panic({{ knownAlias "fmt" }}.Sprintf("field \"%s\" is already set", fieldName))
     }
     b.appliedFields[fieldName] = struct{}{}
 }
@@ -63,35 +63,49 @@ func (m *{{ $stct.Name }}) GetFieldValue(fieldName string) any {
     case _{{ $stct.Name }}FieldNames[{{ $i }}]:
         return m.{{ $item.FieldName }}
 {{- end }}
-	default:
-		panic("unknown field name: "+fieldName)
 	}
-    return nil
+	panic({{ knownAlias "fmt" }}.Sprintf("unknown field name: %s", fieldName))
 }
 
-func (m *{{ $stct.Name }}) QueryZip() ([]string, []any) {
-    if m == nil {
-        return nil, nil
-    }
-    names := {{ $stct.Name }}FieldNames()
-    values := make([]any, 0, len(names))
-    for _, name := range names {
-        values = append(values, m.GetFieldValue(name))
-    }
-    return names, values
-}
-
-func (b *{{ $stct.Name }}Builder) QueryZip() ([]string, []any) {
-    if b.model == nil {
+func (b *{{ $stct.Name }}Builder) QueryZip(caseType {{ knownAlias "cases" }}.CaseType) ([]string, []any) {
+    if b.model == nil || !caseType.IsValid() {
         return nil, nil
     }
     names := make([]string, 0, len(b.appliedFields))
     values := make([]any, 0, len(b.appliedFields))
     for name := range b.appliedFields {
-        names = append(names, name)
+        names = append(names, caseType.From(name))
         values = append(values, b.model.GetFieldValue(name))
     }
     return names, values
+}
+
+func (m *{{ $stct.Name }}) QueryZip(caseType {{ knownAlias "cases" }}.CaseType) ([]string, []any) {
+    if m == nil || !caseType.IsValid() {
+        return nil, nil
+    }
+    if caseType == {{ knownAlias "cases" }}.NoChange {
+        names := {{ $stct.Name }}FieldNames()
+        values := make([]any, 0, len(names))
+        for _, name := range names {
+            values = append(values, m.GetFieldValue(name))
+        }
+        return names, values
+    }
+    allNames := {{ $stct.Name }}FieldNames()
+    names := make([]string, 0, len(allNames))
+    values := make([]any, 0, len(allNames))
+    for _, name := range allNames {
+        names = append(names, caseType.From(name))
+        values = append(values, m.GetFieldValue(name))
+    }
+    return names, values
+}
+
+func (m *{{ $stct.Name }}) QueryScan(rowScan {{ knownAlias "ifaces" }}.RowScanner) error {
+    return rowScan.Scan({{ range $i, $item := $stct.Fields -}}
+    {{- if ne $i 0 }}, {{ end }}&m.{{ $item.FieldName }}
+    {{- end }})
 }
 {{- end }}
 {{- end }}
