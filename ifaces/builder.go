@@ -8,11 +8,10 @@ type Builder[T any] interface {
 
 type BuilderQuery[T any] interface {
 	Builder[T]
-	QueryZip(caseType cases.CaseType) ([]string, []any)
+	QueryValues(caseType cases.CaseType) ([]string, []any)
 }
 
 type QueryableModel interface {
 	GetFieldValue(fieldName string) any
-	QueryZip(caseType cases.CaseType) ([]string, []any)
-	QueryScan(rowScan RowScanner) error
+	QueryValues(caseType cases.CaseType, ptr bool) ([]string, []any)
 }

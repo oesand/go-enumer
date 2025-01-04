@@ -32,7 +32,6 @@ func parseStructType(name string, comment string) (*shared.StructInfo, error) {
 				case "query":
 					definedTags[key] = ""
 					knownImports["cases"] = struct{}{}
-					knownImports["ifaces"] = struct{}{}
 				default:
 					return fmt.Errorf("unknown tag name: %s", key)
 				}
