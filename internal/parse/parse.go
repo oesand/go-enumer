@@ -23,7 +23,7 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 		err = fmt.Errorf("cannot parse file \"%s\": %v", filepath.Base(absolutePath), err)
 		return nil, err
 	}
-	requiredImports := make(map[string]struct{})
+	var requiredImports shared.Set[string]
 	importsMap := make(map[string]string, len(file.Imports))
 	for _, imp := range file.Imports {
 		path := imp.Path.Value
@@ -68,7 +68,7 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 					if !has {
 						panic(fmt.Sprintf("unknown package predefined alias: %s", importName))
 					}
-					requiredImports[importPath] = struct{}{}
+					requiredImports.Add(importPath)
 				}
 
 				var fields []*shared.StructField
@@ -86,7 +86,7 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 						case *ast.SelectorExpr:
 							typeInfo.TypeName = ftyp.Sel.Name
 							importPath := importsMap[ftyp.X.(*ast.Ident).Name]
-							requiredImports[importPath] = struct{}{}
+							requiredImports.Add(importPath)
 							typeInfo.ImportPath = importPath
 						case *ast.StarExpr:
 							typeInfo.Starred = true
@@ -141,7 +141,7 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 					continue
 				}
 				if enumType == shared.IntEnum {
-					requiredImports[shared.KnownPackages["fmt"]] = struct{}{}
+					requiredImports.Add(shared.KnownPackages["fmt"])
 				}
 
 				parsedItems = append(parsedItems, &shared.ParsedItem{
@@ -155,13 +155,9 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 	if err != nil {
 		return nil, err
 	}
-	imports := make([]string, 0, len(requiredImports))
-	for importPath := range requiredImports {
-		imports = append(imports, importPath)
-	}
 	fileInfo := &shared.ParsedFile{
 		Package: file.Name.Name,
-		Imports: imports,
+		Imports: requiredImports,
 		Items:   parsedItems,
 	}
 	return fileInfo, nil

@@ -1,4 +1,4 @@
-{{- range $stct := .Structs -}}
+{{ range $stct := .Structs }}
 // {{ $stct.Name }} struct declarations
 const _{{ $stct.Name }}FieldNameAll = "{{ range $item := $stct.Fields }}{{ $item.FieldName }}{{ end }}"
 

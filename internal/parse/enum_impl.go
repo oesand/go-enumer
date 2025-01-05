@@ -47,7 +47,6 @@ func parseEnumType(enumType shared.KnownEnumType, name string, comment string) (
 			return
 		})
 		if err != nil {
-			fmt.Printf("error: %v\n", err)
 			return nil, err
 		}
 	}

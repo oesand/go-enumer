@@ -9,7 +9,7 @@ const (
 
 type ParsedFile struct {
 	Package string
-	Imports []string
+	Imports Set[string]
 	Items   []*ParsedItem
 }
 
@@ -21,7 +21,7 @@ type ParsedItem struct {
 
 type GenerateData struct {
 	PackageName string
-	Imports     []string
+	Imports     Set[string]
 	Enums       []*EnumInfo
 	Structs     []*StructInfo
 }
@@ -52,7 +52,7 @@ type StructInfo struct {
 	Name   string
 	Fields []*StructField
 
-	KnownImports map[string]struct{}
+	KnownImports Set[string]
 	GenerateKind StructGenKind
 	Tags         map[string]string
 }

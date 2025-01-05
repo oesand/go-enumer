@@ -16,7 +16,7 @@ func parseStructType(name string, comment string) (*shared.StructInfo, error) {
 	}
 
 	var definedTags map[string]string
-	knownImports := map[string]struct{}{}
+	var knownImports shared.Set[string]
 	generationKind := shared.StructGenKind(strings.ToLower(matches[1]))
 	declEndIndex := structExp.FindStringIndex(comment)[1]
 	switch generationKind {
@@ -31,7 +31,7 @@ func parseStructType(name string, comment string) (*shared.StructInfo, error) {
 				switch key {
 				case "query":
 					definedTags[key] = ""
-					knownImports["cases"] = struct{}{}
+					knownImports.Add("cases")
 				default:
 					return fmt.Errorf("unknown tag name: %s", key)
 				}
@@ -41,7 +41,7 @@ func parseStructType(name string, comment string) (*shared.StructInfo, error) {
 				return nil, err
 			}
 		}
-		knownImports["fmt"] = struct{}{}
+		knownImports.Add("fmt")
 	default:
 		return nil, fmt.Errorf("unknown enumer generation kind: %s", generationKind)
 	}

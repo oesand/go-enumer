@@ -77,7 +77,7 @@ func doGenerate() {
 			}
 		}
 		log.Printf("parsed file: %s [%s]", fileName, parsedInfoString.String())
-		generateData.Imports = append(generateData.Imports, file.Imports...)
+		generateData.Imports.CopyFrom(file.Imports)
 	}
 	totalCount := generateData.TotalCount()
 	if totalCount == 0 {
@@ -85,7 +85,7 @@ func doGenerate() {
 		return
 	}
 	log.Printf("generate file enumer.g.go with %d items total", totalCount)
-	err = internal.GenerateFile(&generateData)
+	err = internal.GenerateFile("./enumer.g.go", &generateData)
 	if err != nil {
 		log.Fatal(err)
 	}
