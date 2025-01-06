@@ -80,27 +80,18 @@ func (b *{{ $stct.Name }}Builder) QueryValues(caseType {{ knownAlias "cases" }}.
     return names, values
 }
 
-func (m *{{ $stct.Name }}) QueryValues(caseType {{ knownAlias "cases" }}.CaseType, ptr bool) (names []string, values []any) {
-    if m == nil || !caseType.IsValid() {
-        return nil, nil
+func (m *{{ $stct.Name }}) QueryValues(ptr bool) []any {
+    if m == nil {
+        return nil
     }
-    names = {{ $stct.Name }}FieldNames()
     if ptr {
-        values = []any{ {{- range $i, $item := $stct.Fields -}}
+        return []any{ {{- range $i, $item := $stct.Fields -}}
                 {{- if ne $i 0 }}, {{ end }}&m.{{ $item.FieldName }}
                 {{- end -}} }
-    } else {
-        values = []any{ {{- range $i, $item := $stct.Fields -}}
-                {{- if ne $i 0 }}, {{ end }}m.{{ $item.FieldName }}
-                {{- end -}} }
     }
-    if caseType == {{ knownAlias "cases" }}.NoChange {
-        return
-    }
-    for i, name := range names {
-        names[i] = caseType.From(name)
-    }
-    return
+    return []any{ {{- range $i, $item := $stct.Fields -}}
+            {{- if ne $i 0 }}, {{ end }}m.{{ $item.FieldName }}
+            {{- end -}} }
 }
 {{- end }}
 {{- end }}

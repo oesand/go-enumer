@@ -1,5 +1,7 @@
 package shared
 
+import "github.com/oesand/go-enumer/types"
+
 type ItemType int
 
 const (
@@ -9,7 +11,7 @@ const (
 
 type ParsedFile struct {
 	Package string
-	Imports Set[string]
+	Imports types.Set[string]
 	Items   []*ParsedItem
 }
 
@@ -21,7 +23,7 @@ type ParsedItem struct {
 
 type GenerateData struct {
 	PackageName string
-	Imports     Set[string]
+	Imports     types.Set[string]
 	Enums       []*EnumInfo
 	Structs     []*StructInfo
 }
@@ -52,7 +54,7 @@ type StructInfo struct {
 	Name   string
 	Fields []*StructField
 
-	KnownImports Set[string]
+	KnownImports types.Set[string]
 	GenerateKind StructGenKind
 	Tags         map[string]string
 }

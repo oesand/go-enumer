@@ -1,16 +1,32 @@
 package main
 
 import (
-	"flag"
+	"context"
 	"fmt"
+	_ "github.com/lib/pq"
+	"github.com/oesand/go-enumer/cases"
 	"github.com/oesand/go-enumer/internal"
 	"github.com/oesand/go-enumer/internal/parse"
 	"github.com/oesand/go-enumer/internal/shared"
+	"github.com/oesand/go-enumer/sql"
 	"go/token"
 	"log"
 	"path/filepath"
 	"strings"
 )
+
+// enum(pending, running, completed)
+type IntStatus int
+
+// enum(pending, running, completed)
+type StrStatus string
+
+// enumer:builder query
+type DataStr struct {
+	Id     int64
+	Name   string
+	Status StrStatus
+}
 
 const UsageText = "Usage of enumer: \n" +
 	"\t go-enumer # Help - you here ;) \n" +
@@ -23,16 +39,44 @@ func PrintUsage() {
 }
 
 func main() {
-	log.SetFlags(0)
-	log.SetPrefix("go-enumer: ")
-	flag.Usage = PrintUsage
-	flag.Parse()
 
-	if flag.Arg(0) == "gen" {
-		doGenerate()
-		return
+	ctx := context.Background()
+	rep, err := sqlen.New[*DataStr, int64](
+		"postgres", "user=postgres password=samsung123 dbname=postgres sslmode=disable",
+		"datas", cases.SnakeCase, DataStrFieldNames())
+
+	if err != nil {
+		log.Fatal(err)
 	}
-	PrintUsage()
+
+	//builder := NewDataStrBuilder().
+	//	WithName("name").
+	//	WithStatus(StrStatusPending)
+	//
+	//err = sqlen.ExecUpdate(rep, ctx, 0, builder)
+	//mod, err := sqlen.QuerySelectByPK(rep, ctx, 1)
+	//err = sqlen.ExecDelete(rep, ctx, 1)
+	id, err := sqlen.ExecCreateNext(rep, ctx, &DataStr{
+		Name:   "name",
+		Status: StrStatusPending,
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Created id:", id)
+
+	//return
+	//log.SetFlags(0)
+	//log.SetPrefix("go-enumer: ")
+	//flag.Usage = PrintUsage
+	//flag.Parse()
+	//
+	//if flag.Arg(0) == "gen" {
+	//	doGenerate()
+	//	return
+	//}
+	//PrintUsage()
 }
 
 func doGenerate() {

@@ -3,6 +3,7 @@ package parse
 import (
 	"fmt"
 	"github.com/oesand/go-enumer/internal/shared"
+	"github.com/oesand/go-enumer/types"
 	"regexp"
 	"strings"
 )
@@ -16,7 +17,7 @@ func parseStructType(name string, comment string) (*shared.StructInfo, error) {
 	}
 
 	var definedTags map[string]string
-	var knownImports shared.Set[string]
+	var knownImports types.Set[string]
 	generationKind := shared.StructGenKind(strings.ToLower(matches[1]))
 	declEndIndex := structExp.FindStringIndex(comment)[1]
 	switch generationKind {

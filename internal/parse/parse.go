@@ -3,6 +3,7 @@ package parse
 import (
 	"fmt"
 	"github.com/oesand/go-enumer/internal/shared"
+	"github.com/oesand/go-enumer/types"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -23,7 +24,7 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 		err = fmt.Errorf("cannot parse file \"%s\": %v", filepath.Base(absolutePath), err)
 		return nil, err
 	}
-	var requiredImports shared.Set[string]
+	var requiredImports types.Set[string]
 	importsMap := make(map[string]string, len(file.Imports))
 	for _, imp := range file.Imports {
 		path := imp.Path.Value
