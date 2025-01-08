@@ -1,6 +1,9 @@
 package shared
 
-import "github.com/oesand/go-enumer/types"
+import (
+	"github.com/oesand/go-enumer/cases"
+	"github.com/oesand/go-enumer/types"
+)
 
 type ItemType int
 
@@ -51,8 +54,9 @@ const (
 )
 
 type StructInfo struct {
-	Name   string
-	Fields []*StructField
+	Name      string
+	FieldCase cases.CaseType
+	Fields    []*StructField
 
 	KnownImports types.Set[string]
 	GenerateKind StructGenKind
@@ -61,6 +65,7 @@ type StructInfo struct {
 
 type StructField struct {
 	FieldName string
+	CasedName string
 	TypeInfo  *ExtraTypeInfo
 }
 

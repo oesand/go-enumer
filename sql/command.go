@@ -2,46 +2,65 @@ package sqlen
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/oesand/go-enumer/types"
 	"strings"
 )
 
-func ExecCreate[T types.QueryModel, TPK comparable](repo *Repo[T, TPK], ctx context.Context, model T) (TPK, error) {
-	return execCreate(repo, ctx, model, true)
-}
-
-func ExecCreateNext[T types.QueryModel, TPK comparable](repo *Repo[T, TPK], ctx context.Context, model T) (TPK, error) {
-	return execCreate(repo, ctx, model, false)
-}
-
-func execCreate[T types.QueryModel, TPK comparable](repo *Repo[T, TPK], ctx context.Context, model T, includePk bool) (TPK, error) {
-	values := model.QueryValues(false)
-	if len(values) != len(repo.fields) {
-		panic(fmt.Sprintf("Count fields mismatch, values: %d, fields %d", len(values), len(repo.fields)))
+func ExecCreate[T any, TPK comparable](repo Repo[T, TPK], ctx context.Context, model *T) error {
+	values := repo.Extract(model)
+	fields := repo.Fields()
+	if len(values) != len(fields) {
+		panic(fmt.Sprintf("Count fields mismatch, values: %d, fields %d", len(values), len(fields)))
 	}
 
-	var fields []string
-	if includePk {
-		fields = repo.fields
-	} else {
-		fields = repo.fields[1:]
-		values = values[1:]
+	var valueString strings.Builder
+	for i := 0; i < len(fields); i++ {
+		if i > 0 {
+			valueString.WriteString(", ")
+		}
+		valueString.WriteString(repo.Formatter().Format(i + 1))
 	}
 
-	paramsString := repeatParamPlaceholders(repo.formatter, 0, len(fields))
+	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",
+		repo.Table(), strings.Join(fields, ", "), valueString.String())
+
+	_, err := repo.DB().ExecContext(ctx, query, values...)
+	return err
+}
+
+func ExecCreateNext[T any, TPK comparable](repo Repo[T, TPK], ctx context.Context, model *T) (TPK, error) {
+	values := repo.Extract(model)
+	fields := repo.Fields()
+	if len(values) != len(fields) {
+		panic(fmt.Sprintf("Count fields mismatch, values: %d, fields %d", len(values), len(fields)))
+	}
+
+	fields = fields[1:]
+	values = values[1:]
+
+	var valueString strings.Builder
+	for i := 0; i < len(fields); i++ {
+		if i > 0 {
+			valueString.WriteString(", ")
+		}
+		valueString.WriteString(repo.Formatter().Format(i + 1))
+	}
+
 	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s) RETURNING %s",
-		repo.table, strings.Join(fields, ", "), paramsString, repo.PK())
-
-	fmt.Printf("Query: %s, Values: %v\n", query, values)
+		repo.Table(), strings.Join(fields, ", "), valueString.String(), repo.PK())
 
 	var pk TPK
-	err := repo.db.QueryRowContext(ctx, query, values...).Scan(&pk)
+	err := repo.DB().QueryRowContext(ctx, query, values...).Scan(&pk)
 	return pk, err
 }
 
-func ExecUpdate[T types.QueryModel, TPK comparable](repo *Repo[T, TPK], ctx context.Context, pk TPK, builder types.QueryBuilder) error {
-	names, values := builder.QueryValues(repo.caseType)
+func ExecUpdate[T any, TPK comparable](repo Repo[T, TPK], ctx context.Context, pk TPK, builder types.QueryBuilder[T]) error {
+	names, values := builder.QueryValues()
+	if len(names) == 0 {
+		return errors.New("set values cannot be empty")
+	}
 	if len(names) != len(values) {
 		panic(fmt.Sprintf("Count fields mismatch, names: %d, values %d", len(names), len(values)))
 	}
@@ -51,53 +70,52 @@ func ExecUpdate[T types.QueryModel, TPK comparable](repo *Repo[T, TPK], ctx cont
 		if i > 0 {
 			setString.WriteString(", ")
 		}
-		setString.WriteString(fmt.Sprintf("%s = ?", name))
+		setString.WriteString(fmt.Sprintf("%s = %s", name, repo.Formatter().Format(i+1)))
 	}
 
-	query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = ?",
-		repo.table, setString.String(), repo.PK())
+	query := fmt.Sprintf("UPDATE %s SET %s WHERE %s = %s",
+		repo.Table(), setString.String(), repo.PK(), repo.Formatter().Format(len(names)+1))
 
 	values = append(values, pk)
-	_, err := repo.db.ExecContext(ctx, query, values...)
+	_, err := repo.DB().ExecContext(ctx, query, values...)
 	return err
 }
 
-func ExecDelete[T types.QueryModel, TPK comparable](repo *Repo[T, TPK], ctx context.Context, pk TPK) error {
-	query := fmt.Sprintf("DELETE FROM %s WHERE %s = ?", repo.table, repo.PK())
-	_, err := repo.db.ExecContext(ctx, query, pk)
+func ExecDelete[T any, TPK comparable](repo Repo[T, TPK], ctx context.Context, pk TPK) error {
+	query := fmt.Sprintf("DELETE FROM %s WHERE %s = %s",
+		repo.Table(), repo.PK(), repo.Formatter().Format(1))
+
+	_, err := repo.DB().ExecContext(ctx, query, pk)
 	return err
 }
 
-func QuerySelectByPK[T types.QueryModel, TPK comparable](repo *Repo[T, TPK], ctx context.Context, pk TPK) (T, error) {
-	return QuerySelectSingle(repo, ctx, fmt.Sprintf("%s = ?", repo.PK()), pk)
+func QuerySelectByPK[T any, TPK comparable](repo Repo[T, TPK], ctx context.Context, pk TPK) (*T, error) {
+	return QuerySelectSingle[T, TPK](repo, ctx, fmt.Sprintf("%s = %s", repo.PK(), repo.Formatter().Format(1)), pk)
 }
 
-func QuerySelectSingle[T types.QueryModel, TPK comparable](repo *Repo[T, TPK], ctx context.Context, whereStatement string, values ...any) (T, error) {
+func QuerySelectSingle[T any, TPK comparable](repo Repo[T, TPK], ctx context.Context, whereStatement string, values ...any) (*T, error) {
 	query := fmt.Sprintf("SELECT %s FROM %s WHERE %s",
-		strings.Join(repo.fields, ", "), repo.table, whereStatement)
+		strings.Join(repo.Fields(), ", "), repo.Table(), whereStatement)
 
-	var model T
-	row := repo.db.QueryRowContext(ctx, query, values...)
-	pointers := model.QueryValues(true)
-	err := row.Scan(pointers...)
+	model, pointers := repo.Template()
+	err := repo.DB().QueryRowContext(ctx, query, values...).Scan(pointers...)
 	return model, err
 }
 
-func QuerySelectMany[T types.QueryModel, TPK comparable](repo *Repo[T, TPK], ctx context.Context, whereStatement string, values ...any) ([]T, error) {
+func QuerySelectMany[T any, TPK comparable](repo Repo[T, TPK], ctx context.Context, whereStatement string, values ...any) ([]*T, error) {
 	query := fmt.Sprintf("SELECT %s FROM %s WHERE %s",
-		strings.Join(repo.fields, ", "), repo.table, whereStatement)
+		strings.Join(repo.Fields(), ", "), repo.Table(), whereStatement)
 
-	rows, err := repo.db.QueryContext(ctx, query, values...)
+	rows, err := repo.DB().QueryContext(ctx, query, values...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var models []T
+	var models []*T
 	for rows.Next() {
-		var model T
-		pointers := model.QueryValues(true)
-		err := rows.Scan(pointers...)
+		model, pointers := repo.Template()
+		err = rows.Scan(pointers...)
 		if err != nil {
 			return nil, err
 		}

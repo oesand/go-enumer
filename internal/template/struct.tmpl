@@ -1,11 +1,11 @@
 {{ range $stct := .Structs }}
 // {{ $stct.Name }} struct declarations
-const _{{ $stct.Name }}FieldNameAll = "{{ range $item := $stct.Fields }}{{ $item.FieldName }}{{ end }}"
+const _{{ $stct.Name }}FieldNameAll = "{{ range $item := $stct.Fields }}{{ $item.CasedName }}{{ end }}"
 
 var _{{ $stct.Name }}FieldNames = []string{
 {{- $prevIndex := 0 }}
 {{- range $item := $stct.Fields }}
-	{{- $currIndex := sumWithLen $prevIndex $item.FieldName }}
+	{{- $currIndex := sumWithLen $prevIndex $item.CasedName }}
 	_{{ $stct.Name }}FieldNameAll[{{ $prevIndex }}:{{ $currIndex }}],
 	{{- $prevIndex = $currIndex }}
 {{- end }}
@@ -22,14 +22,11 @@ func New{{ $stct.Name }}Builder() *{{ $stct.Name }}Builder {
 }
 
 type {{ $stct.Name }}Builder struct {
-    model *{{ $stct.Name }}
+    model {{ $stct.Name }}
     appliedFields map[string]struct{}
 }
 
 func (b *{{ $stct.Name }}Builder) ensureOnce(fieldName string) {
-    if b.model == nil {
-        b.model = &{{ $stct.Name }}{}
-    }
     if b.appliedFields == nil {
         b.appliedFields = make(map[string]struct{})
     }
@@ -51,46 +48,77 @@ func (b *{{ $stct.Name }}Builder) Add{{ $item.FieldName }}(values ...{{ genItemT
 }
 {{ end }}{{ end }}
 func (b *{{ $stct.Name }}Builder) Build() {{ $stct.Name }} {
-    return *b.model
+    return b.model
 }
-{{ if hasTag $stct.Tags "query" }}
-func (m *{{ $stct.Name }}) GetFieldValue(fieldName string) any {
-    if m == nil {
-        return nil
-    }
+{{ if hasTag $stct.Tags "repo" }}
+func (b *{{ $stct.Name }}Builder) getFieldValue(fieldName string) any {
     switch fieldName {
 {{- range $i, $item := $stct.Fields }}
     case _{{ $stct.Name }}FieldNames[{{ $i }}]:
-        return m.{{ $item.FieldName }}
+        return b.model.{{ $item.FieldName }}
 {{- end }}
 	}
 	panic({{ knownAlias "fmt" }}.Sprintf("unknown field name: %s", fieldName))
 }
 
-func (b *{{ $stct.Name }}Builder) QueryValues(caseType {{ knownAlias "cases" }}.CaseType) ([]string, []any) {
-    if b.model == nil || !caseType.IsValid() {
-        return nil, nil
-    }
+func (b {{ $stct.Name }}Builder) QueryValues() ([]string, []any) {
     names := make([]string, 0, len(b.appliedFields))
     values := make([]any, 0, len(b.appliedFields))
     for name := range b.appliedFields {
-        names = append(names, caseType.From(name))
-        values = append(values, b.model.GetFieldValue(name))
+        names = append(names, name)
+        values = append(values, b.getFieldValue(name))
     }
     return names, values
 }
 
-func (m *{{ $stct.Name }}) QueryValues(ptr bool) []any {
-    if m == nil {
-        return nil
+func New{{ $stct.Name }}Repo(db *{{ knownAlias "sql" }}.DB, table string, formatter {{ knownAlias "sqlen" }}.ParamFormatter) {{ knownAlias "sqlen" }}.Repo[{{ $stct.Name }}, {{ genItemType (index $stct.Fields 0).TypeInfo }}] {
+    if db == nil || formatter == nil {
+        panic("arguments cannot be nil")
     }
-    if ptr {
-        return []any{ {{- range $i, $item := $stct.Fields -}}
-                {{- if ne $i 0 }}, {{ end }}&m.{{ $item.FieldName }}
-                {{- end -}} }
+    return &{{ casing $stct.Name "camelCase" }}Repo{
+        db: db,
+        table: table,
+        formatter: formatter,
     }
+}
+
+type {{ casing $stct.Name "camelCase" }}Repo struct {
+    db *{{ knownAlias "sql" }}.DB
+    table string
+    fields []string
+    formatter {{ knownAlias "sqlen" }}.ParamFormatter
+}
+
+func (repo *{{ casing $stct.Name "camelCase" }}Repo) DB() *{{ knownAlias "sql" }}.DB {
+    return repo.db
+}
+
+func (repo *{{ casing $stct.Name "camelCase" }}Repo) Table() string {
+    return repo.table
+}
+
+func (repo *{{ casing $stct.Name "camelCase" }}Repo) PK() string {
+    return _{{ $stct.Name }}FieldNames[0]
+}
+
+func (repo *{{ casing $stct.Name "camelCase" }}Repo) Fields() []string {
+    return {{ $stct.Name }}FieldNames()
+}
+
+func (repo *{{ casing $stct.Name "camelCase" }}Repo) Formatter() {{ knownAlias "sqlen" }}.ParamFormatter {
+    return repo.formatter
+}
+
+func (repo *{{ casing $stct.Name "camelCase" }}Repo) Template() (*{{ $stct.Name }}, []any) {
+    var val {{ $stct.Name }}
+    return &val, []any{ {{- range $i, $item := $stct.Fields -}}
+            {{- if ne $i 0 }}, {{ end }}&val.{{ $item.FieldName }}
+            {{- end -}} }
+}
+
+func (repo *{{ casing $stct.Name "camelCase" }}Repo) Extract(val *{{ $stct.Name }}) []any {
     return []any{ {{- range $i, $item := $stct.Fields -}}
-            {{- if ne $i 0 }}, {{ end }}m.{{ $item.FieldName }}
+            {{- if ne $i 0 }}, {{ end }}val.{{ $item.FieldName }}
             {{- end -}} }
 }
 {{- end }}

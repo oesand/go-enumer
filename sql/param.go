@@ -3,7 +3,6 @@ package sqlen
 import (
 	"fmt"
 	"github.com/oesand/go-enumer/types"
-	"strings"
 )
 
 var defaultFormatters = (func() map[string]ParamFormatter {
@@ -21,6 +20,13 @@ var defaultFormatters = (func() map[string]ParamFormatter {
 	}
 	return output
 })()
+
+func DefaultFormatter(driverName string) ParamFormatter {
+	if frm, has := defaultFormatters[driverName]; has {
+		return frm
+	}
+	panic(fmt.Sprintf("unknown driver: %s", driverName))
+}
 
 type FormatterType int
 
@@ -56,15 +62,4 @@ func (p *paramFormatting) Format(index int) string {
 		return p.Prefix
 	}
 	return fmt.Sprintf("%s%d", p.Prefix, index)
-}
-
-func repeatParamPlaceholders(format ParamFormatter, offset, count int) string {
-	var valueString strings.Builder
-	for i := 0; i < count; i++ {
-		if i > 0 {
-			valueString.WriteString(", ")
-		}
-		valueString.WriteString(format.Format(offset + i + 1))
-	}
-	return valueString.String()
 }

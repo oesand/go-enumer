@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
-	"github.com/oesand/go-enumer/cases"
 	"github.com/oesand/go-enumer/internal"
 	"github.com/oesand/go-enumer/internal/parse"
 	"github.com/oesand/go-enumer/internal/shared"
-	"github.com/oesand/go-enumer/sql"
+	sqlen "github.com/oesand/go-enumer/sql"
 	"go/token"
 	"log"
 	"path/filepath"
@@ -21,11 +21,11 @@ type IntStatus int
 // enum(pending, running, completed)
 type StrStatus string
 
-// enumer:builder query
+// enumer:builder repo:snake_case
 type DataStr struct {
-	Id     int64
-	Name   string
-	Status StrStatus
+	Id      int32
+	NameVal string
+	Status  StrStatus
 }
 
 const UsageText = "Usage of enumer: \n" +
@@ -39,34 +39,38 @@ func PrintUsage() {
 }
 
 func main() {
+	db, err := sql.Open("postgres", "user=postgres password=samsung123 dbname=postgres sslmode=disable")
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	ctx := context.Background()
-	rep, err := sqlen.New[*DataStr, int64](
-		"postgres", "user=postgres password=samsung123 dbname=postgres sslmode=disable",
-		"datas", cases.SnakeCase, DataStrFieldNames())
-
-	if err != nil {
-		log.Fatal(err)
-	}
+	rep := NewDataStrRepo(db, "datas", sqlen.DefaultFormatter("postgres"))
 
 	//builder := NewDataStrBuilder().
-	//	WithName("name").
-	//	WithStatus(StrStatusPending)
+	//	WithNameVal("775")
 	//
-	//err = sqlen.ExecUpdate(rep, ctx, 0, builder)
-	//mod, err := sqlen.QuerySelectByPK(rep, ctx, 1)
-	//err = sqlen.ExecDelete(rep, ctx, 1)
+	//err = sqlen.ExecUpdate(rep, ctx, 2, builder)
+	//mod, err := sqlen.QuerySelectByPK(rep, ctx, 2)
+	//err = sqlen.ExecDelete(rep, ctx, 2)
 	id, err := sqlen.ExecCreateNext(rep, ctx, &DataStr{
-		Name:   "name",
-		Status: StrStatusPending,
+		NameVal: "name",
+		Status:  StrStatusPending,
 	})
-
 	if err != nil {
 		log.Fatal(err)
 	}
+	//fmt.Printf("Model: %v\n", mod)
 	fmt.Println("Created id:", id)
 
 	//return
+
+	//mod := new(DataStr)
+	//
+	//q := mod.QueryPtr()
+	//fmt.Printf("Data: %v| Ptr: %v\n", mod, q)
+
 	//log.SetFlags(0)
 	//log.SetPrefix("go-enumer: ")
 	//flag.Usage = PrintUsage

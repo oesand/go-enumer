@@ -3,7 +3,6 @@ package cases
 type CaseType string
 
 const (
-	NoChange   CaseType = ""
 	CamelCase  CaseType = "camelCase"
 	KebabCase  CaseType = "kebab-case"
 	PascalCase CaseType = "PascalCase"
@@ -15,8 +14,6 @@ func (ct CaseType) From(input string) string {
 		return input
 	}
 	switch ct {
-	case NoChange:
-		return input
 	case CamelCase:
 		return ToCamelCase(input)
 	case KebabCase:
@@ -26,11 +23,11 @@ func (ct CaseType) From(input string) string {
 	case SnakeCase:
 		return ToSnakeCase(input)
 	}
-	return ""
+	return input
 }
 
 func (ct CaseType) IsValid() bool {
-	return ct == NoChange || ct == CamelCase || ct == KebabCase ||
+	return ct == "" || ct == CamelCase || ct == KebabCase ||
 		ct == PascalCase || ct == SnakeCase
 }
 

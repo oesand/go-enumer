@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"errors"
 	"fmt"
 	"github.com/oesand/go-enumer/internal/shared"
 	"github.com/oesand/go-enumer/types"
@@ -105,12 +106,17 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 						}
 						fields = append(fields, &shared.StructField{
 							FieldName: fieldName.Name,
+							CasedName: info.FieldCase.From(fieldName.Name),
 							TypeInfo:  &typeInfo,
 						})
 					}
 					if err != nil {
 						break
 					}
+				}
+				if len(fields) == 0 {
+					err = errors.New("cannot generate builder, empty fields")
+					return false
 				}
 				if err != nil {
 					err = newLocatedErr(fileSet, filepath.Base(absolutePath), tspec, err.Error())
