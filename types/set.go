@@ -1,4 +1,4 @@
-package shared
+package types
 
 type Set[K comparable] map[K]struct{}
 
@@ -8,9 +8,11 @@ func (m *Set[K]) create() {
 	}
 }
 
-func (m *Set[K]) Add(key K) {
+func (m *Set[K]) Add(keys ...K) {
 	m.create()
-	(*m)[key] = struct{}{}
+	for _, key := range keys {
+		(*m)[key] = struct{}{}
+	}
 }
 
 func (m *Set[K]) Contains(key K) bool {

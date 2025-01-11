@@ -1,5 +1,10 @@
 package shared
 
+import (
+	"github.com/oesand/go-enumer/cases"
+	"github.com/oesand/go-enumer/types"
+)
+
 type ItemType int
 
 const (
@@ -9,7 +14,7 @@ const (
 
 type ParsedFile struct {
 	Package string
-	Imports Set[string]
+	Imports types.Set[string]
 	Items   []*ParsedItem
 }
 
@@ -21,7 +26,7 @@ type ParsedItem struct {
 
 type GenerateData struct {
 	PackageName string
-	Imports     Set[string]
+	Imports     types.Set[string]
 	Enums       []*EnumInfo
 	Structs     []*StructInfo
 }
@@ -49,16 +54,18 @@ const (
 )
 
 type StructInfo struct {
-	Name   string
-	Fields []*StructField
+	Name      string
+	FieldCase cases.CaseType
+	Fields    []*StructField
 
-	KnownImports Set[string]
+	KnownImports types.Set[string]
 	GenerateKind StructGenKind
 	Tags         map[string]string
 }
 
 type StructField struct {
 	FieldName string
+	CasedName string
 	TypeInfo  *ExtraTypeInfo
 }
 

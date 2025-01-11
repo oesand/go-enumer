@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	tagsExp       = regexp.MustCompile(`\b(\w+)\s*:\s*(\w+)\b|\b\w+\b`)
+	tagsExp       = regexp.MustCompile(`\b([\w\-]+)(?:\s*:\s*([\w\-]+))?\b`)
 	whitespaceExp = regexp.MustCompile(`\s+`)
 )
 

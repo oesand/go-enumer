@@ -1,8 +1,10 @@
 package parse
 
 import (
+	"errors"
 	"fmt"
 	"github.com/oesand/go-enumer/internal/shared"
+	"github.com/oesand/go-enumer/types"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -23,7 +25,7 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 		err = fmt.Errorf("cannot parse file \"%s\": %v", filepath.Base(absolutePath), err)
 		return nil, err
 	}
-	var requiredImports shared.Set[string]
+	var requiredImports types.Set[string]
 	importsMap := make(map[string]string, len(file.Imports))
 	for _, imp := range file.Imports {
 		path := imp.Path.Value
@@ -104,12 +106,17 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 						}
 						fields = append(fields, &shared.StructField{
 							FieldName: fieldName.Name,
+							CasedName: info.FieldCase.From(fieldName.Name),
 							TypeInfo:  &typeInfo,
 						})
 					}
 					if err != nil {
 						break
 					}
+				}
+				if len(fields) == 0 {
+					err = errors.New("cannot generate builder, empty fields")
+					return false
 				}
 				if err != nil {
 					err = newLocatedErr(fileSet, filepath.Base(absolutePath), tspec, err.Error())
