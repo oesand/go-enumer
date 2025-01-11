@@ -112,11 +112,8 @@ func GenerateFile(filePath string, data *shared.GenerateData) error {
 			}
 			return content.String()
 		}
-		funcMap["casing"] = func(data string, cs cases.CaseType) string {
-			if !cs.IsValid() {
-				panic("invalid case type")
-			}
-			return cs.From(data)
+		funcMap["camelCase"] = func(data string) string {
+			return cases.ToCamelCase(data)
 		}
 
 		err = executeTemplate(file, funcMap, "struct.tmpl", map[string]any{

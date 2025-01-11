@@ -61,7 +61,7 @@ func (b *{{ $stct.Name }}Builder) getFieldValue(fieldName string) any {
 	panic({{ knownAlias "fmt" }}.Sprintf("unknown field name: %s", fieldName))
 }
 
-func (b {{ $stct.Name }}Builder) QueryValues() ([]string, []any) {
+func (b *{{ $stct.Name }}Builder) QueryValues() ([]string, []any) {
     names := make([]string, 0, len(b.appliedFields))
     values := make([]any, 0, len(b.appliedFields))
     for name := range b.appliedFields {
@@ -71,52 +71,52 @@ func (b {{ $stct.Name }}Builder) QueryValues() ([]string, []any) {
     return names, values
 }
 
-func New{{ $stct.Name }}Repo(db *{{ knownAlias "sql" }}.DB, table string, formatter {{ knownAlias "sqlen" }}.ParamFormatter) {{ knownAlias "sqlen" }}.Repo[{{ $stct.Name }}, {{ genItemType (index $stct.Fields 0).TypeInfo }}] {
+func New{{ $stct.Name }}Repo(db *{{ knownAlias "sql" }}.DB, table string, formatter {{ knownAlias "sqlen" }}.ParamFormatter) {{ knownAlias "sqlen" }}.Repo[{{ $stct.Name }}] {
     if db == nil || formatter == nil {
         panic("arguments cannot be nil")
     }
-    return &{{ casing $stct.Name "camelCase" }}Repo{
+    return &{{ camelCase $stct.Name }}Repo{
         db: db,
         table: table,
         formatter: formatter,
     }
 }
 
-type {{ casing $stct.Name "camelCase" }}Repo struct {
+type {{ camelCase $stct.Name }}Repo struct {
     db *{{ knownAlias "sql" }}.DB
     table string
     fields []string
     formatter {{ knownAlias "sqlen" }}.ParamFormatter
 }
 
-func (repo *{{ casing $stct.Name "camelCase" }}Repo) DB() *{{ knownAlias "sql" }}.DB {
+func (repo *{{ camelCase $stct.Name }}Repo) DB() *{{ knownAlias "sql" }}.DB {
     return repo.db
 }
 
-func (repo *{{ casing $stct.Name "camelCase" }}Repo) Table() string {
+func (repo *{{ camelCase $stct.Name }}Repo) Table() string {
     return repo.table
 }
 
-func (repo *{{ casing $stct.Name "camelCase" }}Repo) PK() string {
+func (repo *{{ camelCase $stct.Name }}Repo) PK() string {
     return _{{ $stct.Name }}FieldNames[0]
 }
 
-func (repo *{{ casing $stct.Name "camelCase" }}Repo) Fields() []string {
+func (repo *{{ camelCase $stct.Name }}Repo) Fields() []string {
     return {{ $stct.Name }}FieldNames()
 }
 
-func (repo *{{ casing $stct.Name "camelCase" }}Repo) Formatter() {{ knownAlias "sqlen" }}.ParamFormatter {
+func (repo *{{ camelCase $stct.Name }}Repo) Formatter() {{ knownAlias "sqlen" }}.ParamFormatter {
     return repo.formatter
 }
 
-func (repo *{{ casing $stct.Name "camelCase" }}Repo) Template() (*{{ $stct.Name }}, []any) {
+func (repo *{{ camelCase $stct.Name }}Repo) Template() (*{{ $stct.Name }}, []any) {
     var val {{ $stct.Name }}
     return &val, []any{ {{- range $i, $item := $stct.Fields -}}
             {{- if ne $i 0 }}, {{ end }}&val.{{ $item.FieldName }}
             {{- end -}} }
 }
 
-func (repo *{{ casing $stct.Name "camelCase" }}Repo) Extract(val *{{ $stct.Name }}) []any {
+func (repo *{{ camelCase $stct.Name }}Repo) Extract(val *{{ $stct.Name }}) []any {
     return []any{ {{- range $i, $item := $stct.Fields -}}
             {{- if ne $i 0 }}, {{ end }}val.{{ $item.FieldName }}
             {{- end -}} }

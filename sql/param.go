@@ -1,6 +1,7 @@
 package sqlen
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/oesand/go-enumer/types"
 )
@@ -45,7 +46,7 @@ var (
 	QuestionFormatter ParamFormatter = &paramFormatting{Prefix: "?", FType: SymbolFormatterType}
 	DollarFormatter   ParamFormatter = &paramFormatting{Prefix: "$", FType: IndexedFormatterType}
 	IndexedFormatter  ParamFormatter = &paramFormatting{Prefix: "@p", FType: IndexedFormatterType}
-	NamedFormatter    ParamFormatter = &paramFormatting{Prefix: "@prm", FType: NamedFormatterType}
+	NamedFormatter    ParamFormatter = &paramFormatting{Prefix: "@param", FType: NamedFormatterType}
 )
 
 type paramFormatting struct {
@@ -62,4 +63,8 @@ func (p *paramFormatting) Format(index int) string {
 		return p.Prefix
 	}
 	return fmt.Sprintf("%s%d", p.Prefix, index)
+}
+
+func namedParam(index int, value any) sql.NamedArg {
+	return sql.Named(fmt.Sprintf("param%d", index), value)
 }
