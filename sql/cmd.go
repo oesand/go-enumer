@@ -137,6 +137,12 @@ func QuerySelectSingle[T any](repo Repo[T], ctx context.Context, whereStatement 
 
 	model, pointers := repo.Template()
 	err := repo.DB().QueryRowContext(ctx, query, values...).Scan(pointers...)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
 	return model, err
 }
 
@@ -168,4 +174,26 @@ func QuerySelectMany[T any](repo Repo[T], ctx context.Context, whereStatement st
 		models = append(models, model)
 	}
 	return models, nil
+}
+
+func QueryExists[T any](repo Repo[T], ctx context.Context, whereStatement string, values ...any) (bool, error) {
+	query := fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE %s)", repo.Table(), whereStatement)
+
+	if repo.Formatter().Type() == NamedFormatterType {
+		for i, value := range values {
+			if _, ok := values[i].(sql.NamedArg); !ok {
+				values[i] = namedParam(i+1, value)
+			}
+		}
+	}
+
+	var exists bool
+	err := repo.DB().QueryRowContext(ctx, query, values...).Scan(&exists)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+	return exists, nil
 }
