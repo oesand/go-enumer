@@ -85,7 +85,6 @@ func New{{ $stct.Name }}Repo(db *{{ knownAlias "sql" }}.DB, table string, format
 type {{ camelCase $stct.Name }}Repo struct {
     db *{{ knownAlias "sql" }}.DB
     table string
-    fields []string
     formatter {{ knownAlias "sqlen" }}.ParamFormatter
 }
 
