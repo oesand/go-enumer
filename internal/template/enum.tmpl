@@ -26,6 +26,12 @@ var _{{ $enum.EnumName }}Names = []string{
 {{- end }}{{ end }}
 }
 
+func (en {{ $enum.EnumName }}) EnsureValid() {
+	if !en.IsValid() {
+		panic({{ knownAlias "fmt" }}.Sprintf("invalid value %d for {{ $enum.EnumName }} enum", en))
+	}
+}
+
 func (en {{ $enum.EnumName }}) String() string {
     if en.IsValid() {
         return _{{ $enum.EnumName }}Names[en]
@@ -57,6 +63,12 @@ const (
 {{- end }}
 )
 
+func (en {{ $enum.EnumName }}) EnsureValid() {
+	if !en.IsValid() {
+		panic({{ knownAlias "fmt" }}.Sprintf("invalid value '%s' for {{ $enum.EnumName }} enum", en))
+	}
+}
+
 func (en {{ $enum.EnumName }}) String() string {
 	return string(en)
 }
@@ -76,5 +88,4 @@ func (en {{ $enum.EnumName }}) IsValid() bool {
 		en == {{ $item.Name }}
 	{{- end }}{{ end }}{{ end }}
 }
-
 {{ end -}}

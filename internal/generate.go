@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
-	"github.com/oesand/go-enumer/cases"
 	"github.com/oesand/go-enumer/internal/shared"
 	"io"
 	"strings"
@@ -111,9 +110,6 @@ func GenerateFile(filePath string, data *shared.GenerateData) error {
 				content.WriteString(info.FieldCase.From(field.FieldName))
 			}
 			return content.String()
-		}
-		funcMap["camelCase"] = func(data string) string {
-			return cases.ToCamelCase(data)
 		}
 
 		err = executeTemplate(file, funcMap, "struct.tmpl", map[string]any{

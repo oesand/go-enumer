@@ -48,7 +48,7 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 		}
 		for _, spec := range decl.Specs {
 			tspec, ok := spec.(*ast.TypeSpec)
-			if !ok {
+			if !ok || !tspec.Name.IsExported() {
 				continue
 			}
 			switch typ := tspec.Type.(type) {
@@ -147,9 +147,7 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 				if enum == nil {
 					continue
 				}
-				if enumType == shared.IntEnum {
-					requiredImports.Add(shared.KnownPackages["fmt"])
-				}
+				requiredImports.Add(shared.KnownPackages["fmt"])
 
 				parsedItems = append(parsedItems, &shared.ParsedItem{
 					ItemType: shared.EnumItemType,

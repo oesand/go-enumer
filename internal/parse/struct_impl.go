@@ -35,8 +35,11 @@ func parseStructType(name string, comment string) (*shared.StructInfo, error) {
 				case "repo":
 					definedTags[key] = ""
 					fieldCase = cases.CaseType(value)
-					knownImports.Add("sql")
-					knownImports.Add("sqlen")
+					knownImports.Add("sql", "sqlen")
+
+					if !fieldCase.IsValid() {
+						return fmt.Errorf("invalid value '%s' of field %s", fieldCase, key)
+					}
 				default:
 					return fmt.Errorf("unknown tag name: %s", key)
 				}
@@ -46,13 +49,9 @@ func parseStructType(name string, comment string) (*shared.StructInfo, error) {
 				return nil, err
 			}
 		}
-		knownImports.Add("fmt")
+		knownImports.Add("fmt", "types")
 	default:
 		return nil, fmt.Errorf("unknown enumer generation kind: %s", generationKind)
-	}
-
-	if !fieldCase.IsValid() {
-		return nil, fmt.Errorf("invalid field case: %s", fieldCase)
 	}
 
 	structInfo := &shared.StructInfo{

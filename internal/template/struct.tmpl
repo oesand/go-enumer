@@ -23,17 +23,14 @@ func New{{ $stct.Name }}Builder() *{{ $stct.Name }}Builder {
 
 type {{ $stct.Name }}Builder struct {
     model {{ $stct.Name }}
-    appliedFields map[string]struct{}
+    appliedFields {{ knownAlias "types" }}.Set[string]
 }
 
 func (b *{{ $stct.Name }}Builder) ensureOnce(fieldName string) {
-    if b.appliedFields == nil {
-        b.appliedFields = make(map[string]struct{})
-    }
-    if _, ok := b.appliedFields[fieldName]; ok {
+    if b.appliedFields.Contains(fieldName) {
         panic({{ knownAlias "fmt" }}.Sprintf("field \"%s\" is already set", fieldName))
     }
-    b.appliedFields[fieldName] = struct{}{}
+    b.appliedFields.Add(fieldName)
 }
 {{ range $i, $item := $stct.Fields }}
 func (b *{{ $stct.Name }}Builder) With{{ $item.FieldName }}(value {{ genType $item.TypeInfo }}) *{{ $stct.Name }}Builder {
@@ -51,11 +48,11 @@ func (b *{{ $stct.Name }}Builder) Build() {{ $stct.Name }} {
     return b.model
 }
 {{ if hasTag $stct.Tags "repo" }}
-func (b *{{ $stct.Name }}Builder) getFieldValue(fieldName string) any {
+func _Get{{ $stct.Name }}FieldValue(model *{{ $stct.Name }}, fieldName string) any {
     switch fieldName {
 {{- range $i, $item := $stct.Fields }}
     case _{{ $stct.Name }}FieldNames[{{ $i }}]:
-        return b.model.{{ $item.FieldName }}
+        return model.{{ $item.FieldName }}
 {{- end }}
 	}
 	panic({{ knownAlias "fmt" }}.Sprintf("unknown field name: %s", fieldName))
@@ -66,7 +63,7 @@ func (b *{{ $stct.Name }}Builder) QueryValues() ([]string, []any) {
     values := make([]any, 0, len(b.appliedFields))
     for name := range b.appliedFields {
         names = append(names, name)
-        values = append(values, b.getFieldValue(name))
+        values = append(values, _Get{{ $stct.Name }}FieldValue(&b.model, name))
     }
     return names, values
 }
@@ -75,47 +72,47 @@ func New{{ $stct.Name }}Repo(db *{{ knownAlias "sql" }}.DB, table string, format
     if db == nil || formatter == nil {
         panic("arguments cannot be nil")
     }
-    return &{{ camelCase $stct.Name }}Repo{
+    return &_{{ $stct.Name }}Repo{
         db: db,
         table: table,
         formatter: formatter,
     }
 }
 
-type {{ camelCase $stct.Name }}Repo struct {
+type _{{ $stct.Name }}Repo struct {
     db *{{ knownAlias "sql" }}.DB
     table string
     formatter {{ knownAlias "sqlen" }}.ParamFormatter
 }
 
-func (repo *{{ camelCase $stct.Name }}Repo) DB() *{{ knownAlias "sql" }}.DB {
+func (repo *_{{ $stct.Name }}Repo) DB() *{{ knownAlias "sql" }}.DB {
     return repo.db
 }
 
-func (repo *{{ camelCase $stct.Name }}Repo) Table() string {
+func (repo *_{{ $stct.Name }}Repo) Table() string {
     return repo.table
 }
 
-func (repo *{{ camelCase $stct.Name }}Repo) PK() string {
+func (repo *_{{ $stct.Name }}Repo) PK() string {
     return _{{ $stct.Name }}FieldNames[0]
 }
 
-func (repo *{{ camelCase $stct.Name }}Repo) Fields() []string {
+func (repo *_{{ $stct.Name }}Repo) Fields() []string {
     return {{ $stct.Name }}FieldNames()
 }
 
-func (repo *{{ camelCase $stct.Name }}Repo) Formatter() {{ knownAlias "sqlen" }}.ParamFormatter {
+func (repo *_{{ $stct.Name }}Repo) Formatter() {{ knownAlias "sqlen" }}.ParamFormatter {
     return repo.formatter
 }
 
-func (repo *{{ camelCase $stct.Name }}Repo) Template() (*{{ $stct.Name }}, []any) {
+func (repo *_{{ $stct.Name }}Repo) Template() (*{{ $stct.Name }}, []any) {
     var val {{ $stct.Name }}
     return &val, []any{ {{- range $i, $item := $stct.Fields -}}
             {{- if ne $i 0 }}, {{ end }}&val.{{ $item.FieldName }}
             {{- end -}} }
 }
 
-func (repo *{{ camelCase $stct.Name }}Repo) Extract(val *{{ $stct.Name }}) []any {
+func (repo *_{{ $stct.Name }}Repo) Extract(val *{{ $stct.Name }}) []any {
     return []any{ {{- range $i, $item := $stct.Fields -}}
             {{- if ne $i 0 }}, {{ end }}val.{{ $item.FieldName }}
             {{- end -}} }
