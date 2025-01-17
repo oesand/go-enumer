@@ -24,7 +24,7 @@ func UnwrapTx(ctx context.Context) *sql.Tx {
 }
 
 func DefaultExecutor[T any](repo Repo[T], ctx context.Context) ContextExecutor {
-	if tx, ok := ctx.Value(defaultCtxTransactionKey).(*sql.Tx); ok {
+	if tx := UnwrapTx(ctx); tx != nil {
 		return tx
 	}
 	return repo.DB()

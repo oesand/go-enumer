@@ -5,7 +5,12 @@ import (
 	"database/sql"
 )
 
-func ExecuteTx[T any](repo Repo[T], ctx context.Context, opts *sql.TxOptions, execFunc func(Repo[T], context.Context) error) (err error) {
+var DefaultTxOptions = sql.TxOptions{
+	Isolation: sql.LevelReadCommitted,
+	ReadOnly:  false,
+}
+
+func ExecuteTx[T any](repo Repo[T], ctx context.Context, opts *sql.TxOptions, execFunc func(repo Repo[T], ctx context.Context) error) (err error) {
 	if ctx == nil {
 		panic("ctx cannot be nit")
 	}
@@ -13,6 +18,9 @@ func ExecuteTx[T any](repo Repo[T], ctx context.Context, opts *sql.TxOptions, ex
 	var tx *sql.Tx
 	var nested bool
 	if tx, nested = ctx.Value(defaultCtxTransactionKey).(*sql.Tx); !nested {
+		if opts == nil {
+			opts = &DefaultTxOptions
+		}
 		tx, err = repo.DB().BeginTx(ctx, opts)
 		ctx = WrapTx(ctx, tx)
 	}

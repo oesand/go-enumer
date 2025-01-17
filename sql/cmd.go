@@ -136,7 +136,7 @@ func QuerySelectSingle[T any](repo Repo[T], ctx context.Context, whereStatement 
 	}
 
 	model, pointers := repo.Template()
-	err := repo.DB().QueryRowContext(ctx, query, values...).Scan(pointers...)
+	err := DefaultExecutor[T](repo, ctx).QueryRowContext(ctx, query, values...).Scan(pointers...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -158,7 +158,7 @@ func QuerySelectMany[T any](repo Repo[T], ctx context.Context, whereStatement st
 		}
 	}
 
-	rows, err := repo.DB().QueryContext(ctx, query, values...)
+	rows, err := DefaultExecutor[T](repo, ctx).QueryContext(ctx, query, values...)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func QueryExists[T any](repo Repo[T], ctx context.Context, whereStatement string
 	}
 
 	var exists bool
-	err := repo.DB().QueryRowContext(ctx, query, values...).Scan(&exists)
+	err := DefaultExecutor[T](repo, ctx).QueryRowContext(ctx, query, values...).Scan(&exists)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return false, nil
