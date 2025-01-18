@@ -10,9 +10,8 @@ const ProjectLink = "https://github.com/oesand/go-enumer"
 
 var KnownPackages = map[string]string{
 	"fmt":   "\"fmt\"",
-	"sql":   "\"database/sql\"",
+	"sqlen": "\"github.com/oesand/go-enumer/sqlen\"",
 	"cases": "\"github.com/oesand/go-enumer/cases\"",
-	"sqlen": "\"github.com/oesand/go-enumer/sql\"",
 	"types": "\"github.com/oesand/go-enumer/types\"",
 }
 

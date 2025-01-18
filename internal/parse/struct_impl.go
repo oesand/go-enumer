@@ -35,7 +35,7 @@ func parseStructType(name string, comment string) (*shared.StructInfo, error) {
 				case "repo":
 					definedTags[key] = ""
 					fieldCase = cases.CaseType(value)
-					knownImports.Add("sql", "sqlen")
+					knownImports.Add("sqlen")
 
 					if !fieldCase.IsValid() {
 						return fmt.Errorf("invalid value '%s' of field %s", fieldCase, key)

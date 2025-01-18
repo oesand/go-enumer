@@ -10,23 +10,27 @@ var DefaultTxOptions = sql.TxOptions{
 	ReadOnly:  false,
 }
 
-func ExecuteTx[T any](repo Repo[T], ctx context.Context, opts *sql.TxOptions, execFunc func(repo Repo[T], ctx context.Context) error) (err error) {
+func ExecuteTx(ctx context.Context, opts *sql.TxOptions, execFunc func(ctx context.Context) error) (err error) {
 	if ctx == nil {
 		panic("ctx cannot be nit")
 	}
 
 	var tx *sql.Tx
 	var nested bool
-	if tx, nested = ctx.Value(defaultCtxTransactionKey).(*sql.Tx); !nested {
+	if tx, nested = ctx.Value(defaultCtxExecutorKey).(*sql.Tx); !nested {
 		if opts == nil {
 			opts = &DefaultTxOptions
 		}
-		tx, err = repo.DB().BeginTx(ctx, opts)
-		ctx = WrapTx(ctx, tx)
+		if db, ok := ctx.Value(defaultCtxExecutorKey).(*sql.DB); ok {
+			tx, err = db.BeginTx(ctx, opts)
+			ctx = WithTx(ctx, tx)
+		} else {
+			panic("db not passed")
+		}
 	}
 
 	if err != nil {
-		return err
+		return
 	}
 
 	defer func() {
@@ -36,7 +40,7 @@ func ExecuteTx[T any](repo Repo[T], ctx context.Context, opts *sql.TxOptions, ex
 		}
 	}()
 
-	if err := execFunc(repo, ctx); err != nil {
+	if err = execFunc(ctx); err != nil {
 		_ = tx.Rollback()
 		return err
 	}

@@ -33,7 +33,7 @@ func ExecCreate[T any](repo Repo[T], ctx context.Context, model *T) error {
 	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",
 		repo.Table(), strings.Join(fields, ", "), valueString.String())
 
-	_, err := DefaultExecutor[T](repo, ctx).ExecContext(ctx, query, values...)
+	_, err := GetExecutor(ctx).ExecContext(ctx, query, values...)
 	return err
 }
 
@@ -65,7 +65,7 @@ func ExecCreateNext[T any](repo Repo[T], ctx context.Context, model *T) (int64, 
 		repo.Table(), strings.Join(fields, ", "), valueString.String(), repo.PK())
 
 	var pk int64
-	err := DefaultExecutor[T](repo, ctx).QueryRowContext(ctx, query, values...).Scan(&pk)
+	err := GetExecutor(ctx).QueryRowContext(ctx, query, values...).Scan(&pk)
 	return pk, err
 }
 
@@ -100,7 +100,7 @@ func ExecUpdate[T any, TPK comparable](repo Repo[T], ctx context.Context, pk TPK
 	} else {
 		values = append(values, pk)
 	}
-	_, err := DefaultExecutor[T](repo, ctx).ExecContext(ctx, query, values...)
+	_, err := GetExecutor(ctx).ExecContext(ctx, query, values...)
 	return err
 }
 
@@ -115,7 +115,7 @@ func ExecDelete[T any, TPK comparable](repo Repo[T], ctx context.Context, pk TPK
 		value = pk
 	}
 
-	_, err := DefaultExecutor[T](repo, ctx).ExecContext(ctx, query, value)
+	_, err := GetExecutor(ctx).ExecContext(ctx, query, value)
 	return err
 }
 
@@ -136,7 +136,7 @@ func QuerySelectSingle[T any](repo Repo[T], ctx context.Context, whereStatement 
 	}
 
 	model, pointers := repo.Template()
-	err := DefaultExecutor[T](repo, ctx).QueryRowContext(ctx, query, values...).Scan(pointers...)
+	err := GetExecutor(ctx).QueryRowContext(ctx, query, values...).Scan(pointers...)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -158,7 +158,7 @@ func QuerySelectMany[T any](repo Repo[T], ctx context.Context, whereStatement st
 		}
 	}
 
-	rows, err := DefaultExecutor[T](repo, ctx).QueryContext(ctx, query, values...)
+	rows, err := GetExecutor(ctx).QueryContext(ctx, query, values...)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func QueryExists[T any](repo Repo[T], ctx context.Context, whereStatement string
 	}
 
 	var exists bool
-	err := DefaultExecutor[T](repo, ctx).QueryRowContext(ctx, query, values...).Scan(&exists)
+	err := GetExecutor(ctx).QueryRowContext(ctx, query, values...).Scan(&exists)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return false, nil

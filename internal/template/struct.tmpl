@@ -68,25 +68,16 @@ func (b *{{ $stct.Name }}Builder) QueryValues() ([]string, []any) {
     return names, values
 }
 
-func New{{ $stct.Name }}Repo(db *{{ knownAlias "sql" }}.DB, table string, formatter {{ knownAlias "sqlen" }}.ParamFormatter) {{ knownAlias "sqlen" }}.Repo[{{ $stct.Name }}] {
-    if db == nil || formatter == nil {
-        panic("arguments cannot be nil")
-    }
+func New{{ $stct.Name }}Repo(table string, formatter {{ knownAlias "sql" }}.ParamFormatter) {{ knownAlias "sql" }}.Repo[{{ $stct.Name }}] {
     return &_{{ $stct.Name }}Repo{
-        db: db,
         table: table,
         formatter: formatter,
     }
 }
 
 type _{{ $stct.Name }}Repo struct {
-    db *{{ knownAlias "sql" }}.DB
     table string
-    formatter {{ knownAlias "sqlen" }}.ParamFormatter
-}
-
-func (repo *_{{ $stct.Name }}Repo) DB() *{{ knownAlias "sql" }}.DB {
-    return repo.db
+    formatter {{ knownAlias "sql" }}.ParamFormatter
 }
 
 func (repo *_{{ $stct.Name }}Repo) Table() string {
@@ -101,7 +92,7 @@ func (repo *_{{ $stct.Name }}Repo) Fields() []string {
     return {{ $stct.Name }}FieldNames()
 }
 
-func (repo *_{{ $stct.Name }}Repo) Formatter() {{ knownAlias "sqlen" }}.ParamFormatter {
+func (repo *_{{ $stct.Name }}Repo) Formatter() {{ knownAlias "sql" }}.ParamFormatter {
     return repo.formatter
 }
 

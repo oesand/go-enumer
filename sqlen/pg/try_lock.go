@@ -2,8 +2,9 @@ package pg
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
-	sqlen "github.com/oesand/go-enumer/sql"
+	"github.com/oesand/go-enumer/sqlen"
 )
 
 func TryAcqTxAdvisoryLock[T any](repo sqlen.Repo[T], ctx context.Context, key int64) (bool, error) {
@@ -23,8 +24,8 @@ func TryAcqTxAdvisoryLock2String[T any](repo sqlen.Repo[T], ctx context.Context,
 }
 
 func tryAcqTxAdvisoryLock[T any](repo sqlen.Repo[T], ctx context.Context, keys ...any) (bool, error) {
-	tx := sqlen.UnwrapTx(ctx)
-	if tx == nil {
+	exec := sqlen.GetExecutor(ctx)
+	if _, ok := ctx.Value(exec).(*sql.Tx); !ok {
 		panic("acquire advisory lock should use only in transaction")
 	}
 
@@ -41,6 +42,6 @@ func tryAcqTxAdvisoryLock[T any](repo sqlen.Repo[T], ctx context.Context, keys .
 	}
 
 	var result bool
-	err := tx.QueryRowContext(ctx, query, keys...).Scan(&result)
+	err := exec.QueryRowContext(ctx, query, keys...).Scan(&result)
 	return result, err
 }

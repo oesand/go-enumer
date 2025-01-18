@@ -6,12 +6,11 @@ import (
 )
 
 type Repo[T any] interface {
-	DB() *sql.DB
 	Table() string
 	PK() string
 	Fields() []string
-
 	Formatter() ParamFormatter
+
 	Template() (*T, []any)
 	Extract(*T) []any
 }
