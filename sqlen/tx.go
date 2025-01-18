@@ -23,9 +23,9 @@ func ExecuteTx(ctx context.Context, opts *sql.TxOptions, execFunc func(ctx conte
 		}
 		if db, ok := ctx.Value(defaultCtxExecutorKey).(*sql.DB); ok {
 			tx, err = db.BeginTx(ctx, opts)
-			ctx = WithTx(ctx, tx)
+			ctx = context.WithValue(ctx, defaultCtxExecutorKey, tx)
 		} else {
-			panic("db not passed")
+			panic("db not passed in ctx")
 		}
 	}
 
