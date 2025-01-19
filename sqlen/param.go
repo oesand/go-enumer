@@ -7,16 +7,16 @@ import (
 )
 
 var defaultFormatters = (func() map[string]ParamFormatter {
-	formatters := []types.Tuple[ParamFormatter, []string]{
+	formatters := types.PairSlice[ParamFormatter, []string]{
 		{DollarFormatter, []string{"postgres", "pgx", "pq-timeouts", "cloudsqlpostgres", "ql", "nrpostgres", "cockroach"}},
 		{QuestionFormatter, []string{"mysql", "sqlite3", "nrmysql", "nrsqlite3"}},
 		{NamedFormatter, []string{"oci8", "ora", "goracle", "godror"}},
 		{IndexedFormatter, []string{"sqlserver", "azuresql"}},
 	}
 	output := map[string]ParamFormatter{}
-	for _, data := range formatters {
-		for _, name := range data.Second {
-			output[name] = data.First
+	for formatter, names := range formatters.I() {
+		for _, name := range names {
+			output[name] = formatter
 		}
 	}
 	return output
