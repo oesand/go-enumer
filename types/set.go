@@ -29,7 +29,7 @@ func (m *Set[K]) CopyFrom(other Set[K]) {
 	}
 	m.create()
 	for k := range other {
-		m.Add(k)
+		(*m)[k] = struct{}{}
 	}
 }
 

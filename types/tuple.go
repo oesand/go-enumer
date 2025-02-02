@@ -1,24 +1,20 @@
 package types
 
-import "iter"
-
 type Pair[T1 any, T2 any] struct {
 	First  T1
 	Second T2
 }
 
-func (t Pair[T1, T2]) U() (T1, T2) {
-	return t.First, t.Second
+func (p Pair[T1, T2]) U() (T1, T2) {
+	return p.First, p.Second
 }
 
-type PairSlice[T1 any, T2 any] []Pair[T1, T2]
+type Triple[T1 any, T2 any, T3 any] struct {
+	First  T1
+	Second T2
+	Third  T3
+}
 
-func (sl PairSlice[T1, T2]) I() iter.Seq2[T1, T2] {
-	return func(yield func(T1, T2) bool) {
-		for _, pair := range sl {
-			if !yield(pair.U()) {
-				return
-			}
-		}
-	}
+func (t Triple[T1, T2, T3]) U() (T1, T2, T3) {
+	return t.First, t.Second, t.Third
 }

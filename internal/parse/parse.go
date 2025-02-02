@@ -147,7 +147,9 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 				if enum == nil {
 					continue
 				}
-				requiredImports.Add(shared.KnownPackages["fmt"])
+				if enum.TypeName == shared.IntEnum {
+					requiredImports.Add(shared.KnownPackages["fmt"])
+				}
 
 				parsedItems = append(parsedItems, &shared.ParsedItem{
 					ItemType: shared.EnumItemType,
