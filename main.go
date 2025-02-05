@@ -69,9 +69,6 @@ func doGenerate() {
 			case shared.EnumItemType:
 				parsedInfoString.WriteString(fmt.Sprintf("%s@enum", item.Enum.EnumName))
 				generateData.Enums = append(generateData.Enums, item.Enum)
-			case shared.StructItemType:
-				parsedInfoString.WriteString(fmt.Sprintf("%s@struct", item.Struct.Name))
-				generateData.Structs = append(generateData.Structs, item.Struct)
 			default:
 				log.Fatal("unknown item type:", item.ItemType)
 			}

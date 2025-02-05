@@ -1,7 +1,6 @@
 package parse
 
 import (
-	"errors"
 	"fmt"
 	"github.com/oesand/go-enumer/internal/shared"
 	"github.com/oesand/go-enumer/types"
@@ -52,82 +51,6 @@ func ParseFile(fileSet *token.FileSet, absolutePath string) (*shared.ParsedFile,
 				continue
 			}
 			switch typ := tspec.Type.(type) {
-			case *ast.StructType:
-				name := tspec.Name.Name
-				doc := decl.Doc.Text()
-				var info *shared.StructInfo
-				info, err = parseStructType(name, doc)
-				if err != nil {
-					err = newLocatedErr(fileSet, filepath.Base(absolutePath), tspec, err.Error())
-					return false
-				}
-				if info == nil {
-					continue
-				}
-
-				for importName := range info.KnownImports {
-					importPath, has := shared.KnownPackages[importName]
-					if !has {
-						panic(fmt.Sprintf("unknown package predefined alias: %s", importName))
-					}
-					requiredImports.Add(importPath)
-				}
-
-				var fields []*shared.StructField
-				for _, field := range typ.Fields.List {
-					for _, fieldName := range field.Names {
-						if !fieldName.IsExported() {
-							continue
-						}
-						fieldType := field.Type
-						var typeInfo shared.ExtraTypeInfo
-					rollback:
-						switch ftyp := fieldType.(type) {
-						case *ast.Ident:
-							typeInfo.TypeName = ftyp.Name
-						case *ast.SelectorExpr:
-							typeInfo.TypeName = ftyp.Sel.Name
-							importPath := importsMap[ftyp.X.(*ast.Ident).Name]
-							requiredImports.Add(importPath)
-							typeInfo.ImportPath = importPath
-						case *ast.StarExpr:
-							typeInfo.Starred = true
-							fieldType = ftyp.X
-							goto rollback
-						case *ast.ArrayType:
-							typeInfo.IsArray = true
-							fieldType = ftyp.Elt
-							goto rollback
-						default:
-							err = fmt.Errorf("unsupported field type: %T\n", fieldType)
-						}
-						if err != nil {
-							break
-						}
-						fields = append(fields, &shared.StructField{
-							FieldName: fieldName.Name,
-							CasedName: info.FieldCase.From(fieldName.Name),
-							TypeInfo:  &typeInfo,
-						})
-					}
-					if err != nil {
-						break
-					}
-				}
-				if len(fields) == 0 {
-					err = errors.New("cannot generate builder, empty fields")
-					return false
-				}
-				if err != nil {
-					err = newLocatedErr(fileSet, filepath.Base(absolutePath), tspec, err.Error())
-					return false
-				}
-				info.Fields = fields
-				parsedItems = append(parsedItems, &shared.ParsedItem{
-					ItemType: shared.StructItemType,
-					Struct:   info,
-				})
-
 			case *ast.Ident:
 				typeName := typ.Name
 				name := tspec.Name.Name

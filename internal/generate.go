@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/oesand/go-enumer/internal/shared"
 	"io"
-	"strings"
 	"text/template"
 )
 
@@ -58,26 +57,6 @@ func GenerateFile(filePath string, data *shared.GenerateData) error {
 		if err != nil {
 			return err
 		}
-		genType := func(info *shared.ExtraTypeInfo) string {
-			var typeString strings.Builder
-			if info.Starred {
-				typeString.WriteRune('*')
-			}
-			if info.ImportPath != "" {
-				typeString.WriteString(importsMap[info.ImportPath])
-				typeString.WriteByte('.')
-			}
-			typeString.WriteString(info.TypeName)
-			return typeString.String()
-		}
-		funcMap["genItemType"] = genType
-		funcMap["genType"] = func(info *shared.ExtraTypeInfo) string {
-			dcl := genType(info)
-			if info.IsArray {
-				dcl = fmt.Sprintf("[]%s", dcl)
-			}
-			return dcl
-		}
 		funcMap["knownAlias"] = func(name string) string {
 			importPath, has := shared.KnownPackages[name]
 			if !has {
@@ -98,22 +77,6 @@ func GenerateFile(filePath string, data *shared.GenerateData) error {
 	if len(data.Enums) > 0 {
 		err = executeTemplate(file, funcMap, "enum.tmpl", map[string]any{
 			"Enums": data.Enums,
-		})
-		if err != nil {
-			return err
-		}
-	}
-	if len(data.Structs) > 0 {
-		funcMap["genFieldNameAll"] = func(info *shared.StructInfo) string {
-			var content strings.Builder
-			for _, field := range info.Fields {
-				content.WriteString(info.FieldCase.From(field.FieldName))
-			}
-			return content.String()
-		}
-
-		err = executeTemplate(file, funcMap, "struct.tmpl", map[string]any{
-			"Structs": data.Structs,
 		})
 		if err != nil {
 			return err
