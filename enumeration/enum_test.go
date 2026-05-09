@@ -3,6 +3,7 @@ package enumeration
 import (
 	"reflect"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/oesand/go-enumer/internal"
@@ -83,6 +84,9 @@ func TestValues(t *testing.T) {
 	}
 
 	values := slices.Collect(Values[*TestEnum]())
+	slices.SortFunc(values, func(a, b *TestEnum) int {
+		return strings.Compare(a.Key, b.Key)
+	})
 	if !slices.Equal(values, expected) {
 		t.Fatalf("expected %v, got %v", expected, values)
 	}

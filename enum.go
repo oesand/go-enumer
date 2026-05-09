@@ -78,6 +78,13 @@ func IsValid[Enum SupportedTypes](value Enum) bool {
 	return ok
 }
 
+// IsEnum checks if the given type is a declared enum type.
+func IsEnum[Enum SupportedTypes]() bool {
+	var enum internal.Type[Enum]
+	_, ok := enums[enum]
+	return ok
+}
+
 // FromName returns the enum value for the given name, or the zero value and false if not found.
 func FromName[Enum SupportedTypes](name string) (Enum, bool) {
 	entries := getEntries[Enum]()
