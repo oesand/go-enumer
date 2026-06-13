@@ -12,6 +12,7 @@ import (
 )
 
 var enums = map[internal.ShadowType]*enumEntries{}
+var enumsReflect = map[reflect.Type]*enumEntries{}
 
 type enumEntries struct {
 	byName  map[string]any
@@ -34,14 +35,15 @@ func Declare[T SupportedTypes](value T) T {
 // It panics if the name or value is already declared for this enum type.
 // Returns the value for convenience.
 func DeclareNamed[Enum SupportedTypes](name string, value Enum) Enum {
-	var enum internal.Type[Enum]
-	entries, ok := enums[enum]
+	var enumKey internal.Type[Enum]
+	entries, ok := enums[enumKey]
 	if !ok {
 		entries = &enumEntries{
 			byName:  make(map[string]any),
 			byValue: make(map[any]string),
 		}
-		enums[enum] = entries
+		enums[enumKey] = entries
+		enumsReflect[enumKey.Type()] = entries
 	} else {
 		if name != "" {
 			if _, found := entries.byName[name]; found {
@@ -60,13 +62,19 @@ func DeclareNamed[Enum SupportedTypes](name string, value Enum) Enum {
 	return value
 }
 
-// getEntries retrieves the enum entries for type T.
-// Panics if no entries have been declared for this type.
 func getEntries[Enum SupportedTypes]() *enumEntries {
 	var enum internal.Type[Enum]
 	entries, ok := enums[enum]
 	if !ok {
-		panic(fmt.Sprintf("unknown enum: %s", reflect.TypeFor[Enum]()))
+		panic(fmt.Sprintf("enumer: unknown enum: %s", reflect.TypeFor[Enum]()))
+	}
+	return entries
+}
+
+func getEntriesR(t reflect.Type) *enumEntries {
+	entries, ok := enumsReflect[t]
+	if !ok {
+		panic(fmt.Sprintf("enumer: unknown enum: %s", t.String()))
 	}
 	return entries
 }
@@ -82,6 +90,12 @@ func IsValid[Enum SupportedTypes](value Enum) bool {
 func IsEnum[Enum SupportedTypes]() bool {
 	var enum internal.Type[Enum]
 	_, ok := enums[enum]
+	return ok
+}
+
+// IsEnumR checks if the given type is a declared enum type.
+func IsEnumR(t reflect.Type) bool {
+	_, ok := enumsReflect[t]
 	return ok
 }
 
@@ -114,6 +128,30 @@ func Values[Enum SupportedTypes]() iter.Seq[Enum] {
 	return func(yield func(Enum) bool) {
 		for value := range entries.byValue {
 			if !yield(value.(Enum)) {
+				break
+			}
+		}
+	}
+}
+
+// Entries returns an iterator over all enum entries(name, value) for type T.
+func Entries[Enum SupportedTypes]() iter.Seq2[string, Enum] {
+	entries := getEntries[Enum]()
+	return func(yield func(string, Enum) bool) {
+		for value, name := range entries.byValue {
+			if !yield(name, value.(Enum)) {
+				break
+			}
+		}
+	}
+}
+
+// EntriesR returns an iterator over all enum entries(name, value) for type T.
+func EntriesR(t reflect.Type) iter.Seq2[string, any] {
+	entries := getEntriesR(t)
+	return func(yield func(string, any) bool) {
+		for value, name := range entries.byValue {
+			if !yield(name, value) {
 				break
 			}
 		}
